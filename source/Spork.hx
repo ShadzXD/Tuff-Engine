@@ -18,6 +18,17 @@ class Spork {
 		if (DEFINES.exists("cpp") && DEFINES.exists("windows")) {
 			Compiler.addGlobalMetadata("flixel.util.FlxColor", "@:headerCode('#undef TRANSPARENT')");
 		}
+
+		if (DEFINES.exists("USING_FLXANIMATE")) {
+			// flixel-animate thinks ":" means library shit but I'm actually using absolute paths
+			Spoon.bend("animate.FlxAnimateFrames", macro class {
+				static function listWithFilter(path:String, filter:String->Bool, includeSubDirectories:Bool = false)
+				{
+					var list = FlxAnimateAssets.list(path, null, null, includeSubDirectories);
+					return list.filter(filter);
+				}
+			});
+		}
 		
 		Spoon.bend("flixel.tweens.FlxEase", macro class {
 			public static function expoInOut(t:Float):Float
