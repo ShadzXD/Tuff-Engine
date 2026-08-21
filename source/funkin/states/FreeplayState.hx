@@ -264,8 +264,6 @@ class FreeplayState extends MusicBeatSubstate
 			menu.controls = controls;
 		}
 
-		hintBG.exists = hintText.exists = menu.controls != null;
-
 		if (menu.controls == null)
 			return;
 
@@ -402,6 +400,8 @@ class FreeplayState extends MusicBeatSubstate
 
 		scoreText.text = 'PERSONAL BEST • $score • ($rating%)' + fcDisplay;
 		positionHighscore();
+
+		hintBG.exists = hintText.exists = (menu.controls != null) && (persistentUpdate || this.subState == null);
 
 		super.draw();
 	}

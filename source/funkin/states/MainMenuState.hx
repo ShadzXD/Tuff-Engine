@@ -36,21 +36,8 @@ class MainMenuState extends MusicBeatState
 		//'donate',
 		#if MODS_ALLOWED
 		'content',
-		'content',
-		'content',
-		'content',
-		'content',
-		'content',
-		'content',
-		'content',
-		'content',
-		'content',
-		'content',
-		'content',
-		'content',
-		'content',
 		#end
-		//'options',
+		'options',
 	];
 
 	var menuItems:FlxTypedGroup<FlxSprite>;
