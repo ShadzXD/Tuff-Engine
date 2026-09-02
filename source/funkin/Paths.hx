@@ -23,12 +23,15 @@ import sys.FileSystem;
 import sys.io.File;
 #end
 
-//// idgaf about libraries
+//// idgaf about asset libraries
 @:access(openfl.display.BitmapData)
 class Paths
 {
-	inline public static var IMAGE_EXT = "png";
-	inline public static var SOUND_EXT = "ogg";
+	inline public static final ASSETS_PATH:String = 'assets';
+	inline public static final CONTENT_PATH:String = 'content';
+
+	inline public static final IMAGE_EXT = "png";
+	inline public static final SOUND_EXT = "ogg";
 
 	public static final HSCRIPT_EXTENSIONS:Array<String> = ["hscript", "hxs",];
 	public static final SCRIPT_EXTENSIONS:Array<String> = [
@@ -36,64 +39,23 @@ class Paths
 		"hxs",
 	];
 
-
-	public static function getFileWithExtensions(scriptPath:String, extensions:Array<String>):Null<String> {
-		for (fileExt in extensions) {
-			var fullPath = getPath('$scriptPath.$fileExt');
-			if (fullPath != null)
-				return fullPath;
-		}
-
-		return null;
-	}
-
-	public static function isHScript(file:String){
-		for(ext in Paths.HSCRIPT_EXTENSIONS)
-			if(file.endsWith('.$ext'))
-				return true;
-		
-		return false;
-	}
-	public inline static function getHScriptPath(scriptPath:String):Null<String>
-	{
-		#if HSCRIPT_ALLOWED
-		return getFileWithExtensions(scriptPath, Paths.HSCRIPT_EXTENSIONS);
-		#else
-		return null;
-		#end
-	}
-
-	public inline static function hscript(key:String):Null<String> {
-		#if HSCRIPT_ALLOWED
-		return getFileWithExtensions(key, Paths.HSCRIPT_EXTENSIONS);
-		#else
-		return null;
-		#end
-	}
-
 	public static var localTrackedAssets:Array<String> = [];
 	public static var currentTrackedAssets:Map<String, FlxGraphic> = [];
 	public static var currentTrackedSounds:Map<String, Sound> = [];
 
 	public static var dumpExclusions:Array<String> = [
-		'assets/music/freakyIntro.$SOUND_EXT',
-		'assets/music/freakyMenu.$SOUND_EXT',
-		'assets/music/breakfast.$SOUND_EXT',
-		'$contentFolderName/global/music/freakyIntro.$SOUND_EXT',
-		'$contentFolderName/global/music/freakyMenu.$SOUND_EXT',
-		'$contentFolderName/global/music/breakfast.$SOUND_EXT',
-		'assets/images/Garlic-Bread-PNG-Images.$IMAGE_EXT'
+		'$ASSETS_PATH/music/freakyIntro.$SOUND_EXT',
+		'$ASSETS_PATH/music/freakyMenu.$SOUND_EXT',
+		'$ASSETS_PATH/music/breakfast.$SOUND_EXT',
+		'$CONTENT_PATH/global/music/freakyIntro.$SOUND_EXT',
+		'$CONTENT_PATH/global/music/freakyMenu.$SOUND_EXT',
+		'$CONTENT_PATH/global/music/breakfast.$SOUND_EXT',
+		'$ASSETS_PATH/images/Garlic-Bread-PNG-Images.$IMAGE_EXT'
 	];
 	public static var graphicDumpExclusions:Array<FlxGraphic> = [];
 	public static var soundDumpExclusions:Array<Sound> = [];
 
 	public static var whitePixel:flixel.graphics.frames.FlxFrame;
-
-	public static function excludeAsset(key:String)
-	{
-		if (!dumpExclusions.contains(key))
-			dumpExclusions.push(key);
-	}
 
 	public static function init() {
 		{ //ACTUAL white pixel, instead of 10x10 white pixels fuck flixel piece of shit good for nothing
@@ -111,6 +73,12 @@ class Paths
 
 		PackManager.reloadPackList();
 		PackManager.refreshReadList();
+	}
+
+	public static function excludeAsset(path:String)
+	{
+		if (!dumpExclusions.contains(path))
+			dumpExclusions.push(path);
 	}
 
 	/// haya I love you for the base cache dump I took to the max
@@ -220,7 +188,15 @@ class Paths
 	public static inline function getPaths(key:String)
 		return new PackPathsIterator(key);
 
-	//public static function packFolderIterator(dir:String)
+	public static function getFileWithExtensions(scriptPath:String, extensions:Array<String>):Null<String> {
+		for (fileExt in extensions) {
+			var fullPath = getPath('$scriptPath.$fileExt');
+			if (fullPath != null)
+				return fullPath;
+		}
+
+		return null;
+	}
 
 	/*
 	inline static public function txt(key:String):String
@@ -247,19 +223,36 @@ class Paths
 		return getPath('fonts/$key');
 	}
 
-	static public function video(key:String, ext:String = "mp4"):String
+	public inline static function video(key:String, ext:String = "mp4"):String
 	{
 		return getPath('videos/$key.$ext');
 	}
 
-	static public function getShaderFragment(name:String):Null<String>
+	public inline static function getShaderFragment(name:String):Null<String>
 	{
 		return getPath('shaders/$name.frag');
 	}
 	
-	static public function getShaderVertex(name:String):Null<String>
+	public inline static function getShaderVertex(name:String):Null<String>
 	{
 		return getPath('shaders/$name.vert');
+	}
+
+	public inline static function getHScriptPath(scriptPath:String):Null<String>
+	{
+		#if HSCRIPT_ALLOWED
+		return getFileWithExtensions(scriptPath, Paths.HSCRIPT_EXTENSIONS);
+		#else
+		return null;
+		#end
+	}
+
+	public inline static function hscript(key:String):Null<String> {
+		#if HSCRIPT_ALLOWED
+		return getFileWithExtensions(key, Paths.HSCRIPT_EXTENSIONS);
+		#else
+		return null;
+		#end
 	}
 
 	inline static public function sound(key:String, ?library:String):Null<Sound>
@@ -292,6 +285,14 @@ class Paths
 		return track(song, "Inst");
 	}
 
+	public static function isHScript(file:String){
+		for(ext in Paths.HSCRIPT_EXTENSIONS)
+			if(file.endsWith('.$ext'))
+				return true;
+		
+		return false;
+	}
+		
 	inline static public function withoutEndingSlash(path:String)
 		return path.endsWith("/") ? path.substr(0, -1) : path;
 
@@ -392,12 +393,12 @@ class Paths
 	}
 	static public function getJson(path:String):Null<Dynamic>
 	{
-		var parsed:Null<Dynamic> = null;
 		var raw = Paths.getContent(path);
+		if (raw == null)
+			return null;
 
 		try {
-			if (raw != null)
-				parsed = Json.parse(raw);
+			return Json.parse(raw);
 		}
 		catch(e:haxe.Exception) {
 			var e = e.message;
@@ -427,7 +428,7 @@ class Paths
 			print('$path: $e');
 		}
 
-		return parsed;
+		return null;
 	}
 
 	inline static public function sparrowAtlas(key:String, ?library:String, allowGPU:Bool = true):FlxAtlasFrames
@@ -689,7 +690,6 @@ class Paths
 	public static var currentPackId(get, set):String;
 	public static var packList(get, never):Array<String>;
 	public static var packMap(get, never):Map<String, Pack>;
-	public static var contentFolderName(get, never):String;
 
 	static inline function get_currentPack() return PackManager.currentPack;
 	static inline function set_currentPack(v:Pack) return PackManager.currentPack = v;
@@ -697,9 +697,12 @@ class Paths
 	static inline function set_currentPackId(v:String) return PackManager.currentPackId = v;
 	static inline function get_packList() return PackManager.packList;
 	static inline function get_packMap() return PackManager.packMap;
-	static inline function get_contentFolderName() return PackManager.CONTENT_PATH;
 	
 	#if ALLOW_DEPRECATION
+	@:deprecated('contentFolderName is deprecated! Use CONTENT_PATH instead.')
+	public static var contentFolderName(get, never):String;
+	static inline function get_contentFolderName() return CONTENT_PATH;
+
 	@:deprecated('currentModDirectory is deprecated! Use currentPackId instead.')
 	public static var currentModDirectory(get, set):String;
 	static inline function get_currentModDirectory() return currentPackId;
