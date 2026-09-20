@@ -21,7 +21,9 @@ function getNamedProp(n)
 
 function buildStage(){
 	super();
-	game.gf.scrollFactor.set(1, 1);
+	
+	if (game.gf != null)
+		game.gf.scrollFactor.set(1, 1);
 
 	scrollingSky = new FlxTiledSprite(Paths.image('stages/phillyStreets/phillySkybox'), 2922, 718, true, false);
 	scrollingSky.setPosition(-650, -375);

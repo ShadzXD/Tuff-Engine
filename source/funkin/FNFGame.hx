@@ -45,6 +45,9 @@ class FNFGame extends FlxGame
 		FlxG.mouse.visible = false;
 
 		////
+		FlxG.signals.preStateSwitch.add(() -> FlxG.autoPause = ClientPrefs.autoPause);
+
+		////
 		FlxG.signals.gameResized.add((w, h) -> resetSpriteCache());
 		FlxG.signals.focusGained.add(resetSpriteCache);
 

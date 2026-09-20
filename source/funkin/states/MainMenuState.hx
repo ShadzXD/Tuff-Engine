@@ -47,9 +47,7 @@ class MainMenuState extends MusicBeatState
 	var bg:FlxSprite;
 	var magenta:FlxSprite;
 	var bgTweenFunction:Float -> Void;
-
-	//// Camera is moved to scroll along the options if they don't fit on screen
-	var camFollow:FlxPoint = FlxPoint.get();
+	var camFollow:FlxObject;
 	var camFollowPos:FlxObject;
 	var maxCamBottom:Float = 0;
 	var maxBGY:Float = 0;
@@ -76,14 +74,33 @@ class MainMenuState extends MusicBeatState
 		FlxG.camera.follow(camFollowPos, null, 1);
 
 		////
+		var yScroll:Float = Math.max(0.1, 0.25 - (0.05 * (optionShit.length - 4)));
+		var bgScale = 1.175;
+		
 		bg = new FlxSprite(0, 0, Paths.image('menuBG'));
 		bg.screenCenter();
+		bg.scale.set(bgScale, bgScale);
 		add(bg);
 		
 		magenta = new FlxSprite(0, 0, Paths.image('menuBGMagenta'));
 		magenta.screenCenter();
+		magenta.scale.set(bgScale, bgScale);
 		magenta.visible = false;
 		add(magenta);
+
+		var bgScale = bg.scale.x;
+		var bgTargetScale = 1.0;//Math.max(FlxG.width / bg.frameWidth, FlxG.height / bg.frameHeight);
+		var bgScroll = bg.scrollFactor.y;
+
+		bgTweenFunction = function(progress:Float) {
+			//var progress = progress / 1.125;
+
+			var scale = FlxMath.lerp(bgScale, bgTargetScale, progress);
+			magenta.scale.x = magenta.scale.y = bg.scale.x = bg.scale.y = scale;
+
+			var scroll = FlxMath.lerp(bgScroll, 0.0, progress);
+			bg.scrollFactor.y = magenta.scrollFactor.y = scroll;
+		}
 
 		////
 		menuItems = new FlxTypedGroup<FlxSprite>();

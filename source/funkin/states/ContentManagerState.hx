@@ -554,7 +554,9 @@ class ContentManagerState extends MusicBeatState {
 	function handleBack() {
 		if (didChanges) {
 			PackManager.entries = entries;
+			#if MODS_ALLOWED
 			PackManager.flushEntryList();
+			#end
 			PackManager.reloadPackList();
 		}
 

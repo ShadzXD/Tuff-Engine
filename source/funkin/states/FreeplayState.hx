@@ -6,8 +6,6 @@ import flixel.util.FlxColor;
 import funkin.objects.hud.HealthIcon;
 import funkin.objects.ChangingMenuBG;
 
-import sys.FileSystem;
-import funkin.data.Song;
 import funkin.data.BaseSong;
 import funkin.data.Level;
 import funkin.data.Highscore;
@@ -60,6 +58,9 @@ class FreeplayState extends MusicBeatSubstate
 	
 	var hintBG:FlxSprite;
 	var hintText:FlxText;
+
+	var songLoaded:String = null;
+	var selectedSong:String = null;
 
 	public static function getFreeplaySongs():Array<BaseSong> {
 		var list:Array<BaseSong> = [];
@@ -165,49 +166,16 @@ class FreeplayState extends MusicBeatSubstate
 			MusicBeatState.switchState(new funkin.states.MainMenuState());
 	}
 
-	var songLoaded:String = null;
-	var selectedSong:String = null;
-	function onAccept() {
-		var proceed:Bool = false;
-		
-		if (selectedSongCharts.length == 0)
-			proceed = false;
-		else{
-			proceed = songLoaded == selectedSong && PlayState.SONG != null;
-		
-			if (!proceed) {
-				try {
-					PlayState.loadPlaylist([selectedSongData], curChartId);
-					proceed = PlayState.SONG != null;
-				}catch(e) {
-					Main.printExceptionStack();
-
-					var txt = 'ERROR LOADING SONG';
-					txt += '\n${e.message}';
-
-					// while I COULD use AlphabetPrompt
-					// fuck YOU
-					var ss = new funkin.states.base.Prompt(txt, 0, null, null, "OK", "OK");
-					persistentUpdate = false;
-					openSubState(ss);
-
-					ss.add(new funkin.objects.FlxSignalHolder(FlxG.signals.postUpdate, function() {
-						if (FlxG.mouse.justMoved)
-							FlxG.mouse.visible = true;
-
-						if (controls.ACCEPT)
-							ss.close();
-					}));
-					this.subStateClosed.addOnce(function(ss) {
-						FlxG.mouse.visible = false;
-						persistentUpdate = true;
-					});
-
-					proceed = false;
-					//throw e;
-				}
-			}
+	function onAccept() {		
+		if (selectedSongCharts.length == 0) {
+			FlxG.sound.play(Paths.sound('cancelMenu'));
+			showMessage("No charts available");
+			return;
 		}
+		
+		var proceed = (songLoaded == selectedSong) && (PlayState.SONG != null);
+		if (!proceed)
+			proceed = loadSong();
 
 		if (!proceed) {
 			FlxG.sound.play(Paths.sound('cancelMenu'));
@@ -227,12 +195,59 @@ class FreeplayState extends MusicBeatSubstate
 			LoadingState.loadAndSwitchState(new PlayState());
 	}
 
+	function loadSong():Bool {
+		var success:Bool = false;
+
+		try {
+			PlayState.loadPlaylist([selectedSongData], curChartId);
+			success = PlayState.SONG != null;
+		}catch(e) {
+			/*
+			Main.printExceptionStack();
+
+			var txt = 'ERROR LOADING SONG';
+			txt += '\n${e.message}';
+			txt += '\n\n${CrashHandler.callstackToString(haxe.CallStack.exceptionStack())}';
+			showMessage(txt);
+			*/
+			CrashHandler.onCrash(e.message);
+			
+			success = false;
+		}
+
+		if (success)
+			songLoaded = selectedSong;
+
+		return success;
+	}
+
+	function showMessage(txt:String) {
+		var ss = new funkin.states.base.Prompt(txt, 0, null, null, "OK", "OK");
+		persistentUpdate = false;
+		openSubState(ss);
+
+		ss.add(new funkin.objects.FlxSignalHolder(FlxG.signals.postUpdate, function() {
+			if (FlxG.mouse.justMoved)
+				FlxG.mouse.visible = true;
+
+			if (controls.ACCEPT)
+				ss.close();
+		}));
+		ss.closeCallback = function() {
+			FlxG.mouse.visible = false;
+			persistentUpdate = true;
+		}
+	}
+
 	function playSelectedSongMusic() {
 		// load song json and play inst
-		if (songLoaded != selectedSong){
-			songLoaded = selectedSong;
-			PlayState.loadPlaylist([selectedSongData], curChartId);
-			
+		if (songLoaded == selectedSong)
+			return;
+
+		if (!loadSong())
+			return;
+		
+		try {
 			if (PlayState.SONG != null){
 				var instAsset = selectedSongData.getTrackSound(PlayState.SONG.tracks.inst[0]);
 				FlxG.sound.playMusic(instAsset, 0.6);
@@ -241,6 +256,17 @@ class FreeplayState extends MusicBeatSubstate
 				Conductor.changeBPM(PlayState.SONG.bpm);
 				Conductor.tracks.push(FlxG.sound.music);
 			}
+		}
+		catch(e:Dynamic) {
+			/*
+			Main.printExceptionStack();
+
+			var txt = 'ERROR LOADING SONG';
+			txt += '\n${e.message}';
+			txt += '\n\n${CrashHandler.callstackToString(haxe.CallStack.exceptionStack())}';
+			showMessage(txt);
+			*/
+			CrashHandler.onCrash(e.message);
 		}
 	}
 

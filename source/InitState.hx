@@ -1,5 +1,6 @@
 package;
 
+import flixel.util.FlxTimer;
 import funkin.*;
 import funkin.states.base.MusicBeatState;
 
@@ -58,50 +59,71 @@ class InitState extends TransitionableState
 	var bar:FlxSprite;
 	var loadTwn:FlxTween = null;
 
-	static final shitToDo:Array<ShitToDo> = [
-		Run("Setting up game", function() {
-			FNFGame.specialKeysEnabled = true;
-			FlxG.keys.preventDefaultKeys = [TAB];
-			FlxG.fixedTimestep = false;
-
-			TransitionableState.defaultTransition = funkin.transitions.FadeTransition;
-		}),
-		Run("Initializing assets", Paths.init),
-		Run("Initializing controls", Controls.init),
-		Run("Initializing preferences", ClientPrefs.initialize),
-		Run("Loading preferences", ClientPrefs.load),
-		Run("Loading high scores", Highscore.load),
-		#if FUNNY_ALLOWED
-		Run("Loading bread", function() {
-			var bread = Main.bread;
-			bread.bitmapData = Paths.image("Garlic-Bread-PNG-Images").bitmap;
-			
-			function onGameResize(stageWidth, stageHeight){
-				var scaleFactor = stageHeight / FlxG.initialHeight;
-				bread.scaleX = scaleFactor;
-				bread.scaleY = scaleFactor;
-				bread.x = (stageWidth - bread.width) / 2;
-				bread.y = (stageHeight - bread.height) / 2;
-			}
-			
-			onGameResize(FlxG.width, FlxG.height);
-			FlxG.signals.gameResized.add(onGameResize);
-		}),
-		#end
-		#if (CHECK_FOR_UPDATES || display)
-		Run("Checking for updates", function() {
-			UpdaterState.getRecentGithubRelease();
-			UpdaterState.checkOutOfDate();
-			UpdaterState.clearTemps("./");
-		}),
-		#end
-		Run("All done!", () -> {
-			goToState();
-		}),
-	];
+	final shitToDo:Array<ShitToDo>;
 
 	public function new()
 	{
+		shitToDo = [
+			Run("Initializing assets", Paths.init),
+			Run("Initializing controls", Controls.init),
+			Run("Initializing preferences", ClientPrefs.initialize),
+			Run("Loading preferences", function() {
+				ClientPrefs.load();
+				FlxG.autoPause = false;
+			}),
+			Run("Loading high scores", Highscore.load),
+			#if FUNNY_ALLOWED
+			Run("Loading bread", function() {
+				final graphic = Paths.image("Garlic-Bread-PNG-Images");
+				Paths.graphicDumpExclusions.push(graphic);
+				
+				final bread = Main.bread;
+				bread.bitmapData = graphic.bitmap;
+				
+				function onGameResize(stageWidth, stageHeight){
+					var scaleFactor = stageHeight / FlxG.initialHeight;
+					bread.scaleX = scaleFactor;
+					bread.scaleY = scaleFactor;
+					bread.x = (stageWidth - bread.width) / 2;
+					bread.y = (stageHeight - bread.height) / 2;
+				}
+				
+				onGameResize(FlxG.width, FlxG.height);
+				FlxG.signals.gameResized.add(onGameResize);
+			}),
+			#end
+			#if (CHECK_FOR_UPDATES || display)
+			Run("Checking for updates", function() {
+				UpdaterState.getRecentGithubRelease();
+				UpdaterState.checkOutOfDate();
+				UpdaterState.clearTemps("./");
+			}),
+			#end
+			Run("All done!", () -> {
+				@:privateAccess
+				var notFocused = FlxG.stage.window.minimized || Main.game._lostFocus; 
+				if (notFocused) {
+					FlxG.camera.visible = false;
+					this.transOut = null;
+				}
+				
+				new FlxTimer().start(2 / 40, function(_) {
+					goToState();
+					
+					/*
+					if (notFocused) {
+						// Force focus :P
+						FlxG.stage.window.minimized = true;
+						FlxG.stage.window.minimized = false;
+						FlxG.stage.window.focus();
+					}
+					*/
+
+					FlxG.autoPause = ClientPrefs.autoPause;
+				});
+			}),
+		];
+
 		super();
 		// this.canBeScripted = false; // vv wait this isnt a musicbeatstate LOL!
 
@@ -115,6 +137,13 @@ class InitState extends TransitionableState
 	override function create()
 	{
 		super.create();
+
+		TransitionableState.defaultTransition = funkin.transitions.FadeTransition;
+
+		FNFGame.specialKeysEnabled = true;
+		FlxG.keys.preventDefaultKeys = [TAB];
+		FlxG.fixedTimestep = false;
+		FlxG.autoPause = false;
 
 		#if false
 		var bmp = Paths.getBitmapData("assets/images/trollface.png");
@@ -166,7 +195,7 @@ class InitState extends TransitionableState
 	function doStuff() {
 		if (!working) {
 			var todo = shitToDo[step];
-			print(todo.str);
+			trace(todo.str);
 			log.addMessage(todo.str);
 			working = true;
 		}

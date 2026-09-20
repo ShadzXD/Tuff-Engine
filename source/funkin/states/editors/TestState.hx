@@ -1,7 +1,9 @@
 package funkin.states.editors;
 
+import flixel.addons.ui.interfaces.IFlxUIWidget;
+import flixel.text.FlxText;
+import funkin.objects.ui.CustomFlxUI.CustomFlxUIDropDownMenu;
 import funkin.data.StageData;
-import funkin.states.TitleState.TitleLogo;
 import flixel.util.FlxColor;
 import funkin.objects.Alphabet;
 import funkin.input.Controls;
@@ -14,10 +16,15 @@ import flixel.ui.FlxButton;
 
 // cringe
 
-class TestState extends MusicBeatState{
+class TestState extends funkin.states.base.CustomFlxUIState {
 	var UI_box:FlxUITabMenu;
 	var alphGroup:FlxTypedGroup<FlxBasic>;
 	var titlGroup:FlxTypedGroup<FlxBasic>;
+	var coolbgGroup:FlxTypedGroup<FlxBasic>;
+
+	////
+	var stage:Stage = null;
+	var logoBl:TitleLogo = null;
 
 	////
 	public var camGame:FlxCamera = new FlxCamera();
@@ -43,17 +50,20 @@ class TestState extends MusicBeatState{
 		////
 		var tabs = [
 			{name: 'Alphabet', label: 'Alphabet'},
-			{name: 'Title Screen', label: 'Title Screen'}
+			{name: 'Title Screen', label: 'Title Screen'},
+			{name: 'Cool BG', label: 'Cool BG'},
 		];
 		UI_box = new FlxUITabMenu(null, tabs, true);
-		UI_box.resize(250, 200);
+		UI_box.resize(270, 200);
 		UI_box.scrollFactor.set();
 		UI_box.cameras = [camHUD];
 
-		UI_box.selected_tab_id = 'Alphabet';
-
 		alphGroup = createAlphabetUI();
 		titlGroup = createTitleUI();
+		coolbgGroup = createCoolBGUI();
+
+		UI_box.selected_tab_id = 'Alphabet';
+		curGroup = alphGroup;
 
 		super.create();
 	}
@@ -73,20 +83,9 @@ class TestState extends MusicBeatState{
 			MusicBeatState.playMenuMusic(true);
 		}
 
-		if (UI_box != null){
-			switch (UI_box.selected_tab_id){
-				case "Alphabet":
-					curGroup = alphGroup;
-					camGame.bgColor = 0xFF999999;
-				case "Title Screen":
-					curGroup = titlGroup;
-			}
-		}
-
 		if (curGroup != lastGroup){
 			remove(lastGroup);
 			add(curGroup);
-
 			lastGroup = curGroup;
 		}
 
@@ -99,8 +98,34 @@ class TestState extends MusicBeatState{
 		super.update(elapsed);
 	}
 	
+	override function getEvent(name:String, sender:IFlxUIWidget, data:Dynamic, ?params:Array<Dynamic>) {
+		if (name == FlxUITabMenu.CLICK_EVENT) {
+			switch (data) {
+				case "Alphabet":
+					curGroup = alphGroup;
+					camGame.bgColor = 0xFF999999;
+
+				case "Title Screen":
+					curGroup = titlGroup;
+					updateStageCamera();
+
+				case "Cool BG":
+					curGroup = coolbgGroup;
+
+					camGame.zoom = 1;
+					camGame.bgColor = 0;
+					camFollow.set(FlxG.width / 2, FlxG.height / 2);
+					camFollowPos.setPosition(FlxG.width / 2, FlxG.height / 2);
+			}
+		}
+	}
+
 	function createAlphabetUI()
 	{
+		var tab_group = new FlxUI(null, UI_box);
+		tab_group.name = "Alphabet";
+		UI_box.addGroup(tab_group);
+
 		var group = new FlxTypedGroup<FlxBasic>();
 		group.add(UI_box);
 
@@ -117,9 +142,7 @@ class TestState extends MusicBeatState{
 
 		////
 		var inputText = new FlxUIInputText(10, 40, 230, 'abcdefghijklmnopqrstuvwxyz', 8);
-		inputText.cameras = [camHUD];
 		var boldCheckbox:FlxUICheckBox = new FlxUICheckBox(10, 70, null, null, "Bold", 100);
-		boldCheckbox.cameras = [camHUD];
 
 		function updateText(){
 			alphabetInstance.bold = boldCheckbox.checked;
@@ -148,14 +171,13 @@ class TestState extends MusicBeatState{
 			updateFunction = null;
 			updateText();
 		};
-		group.add(inputText);
+		tab_group.add(inputText);
 		
 		boldCheckbox.callback = updateText;
-		group.add(boldCheckbox);
+		tab_group.add(boldCheckbox);
 
 		var woo:Bool = false;
 		var changeButton = new FlxButton(10, 100, "toUpperCase");
-		changeButton.cameras = [camHUD];
 		changeButton.onUp.callback = function()
 		{
 			inputText.text = woo ? inputText.text.toLowerCase() : inputText.text.toUpperCase();
@@ -164,41 +186,47 @@ class TestState extends MusicBeatState{
 			
 			updateText();
 		}
-		group.add(changeButton);
+		tab_group.add(changeButton);
 
 		////
 		return group;
 	}
 
+	function updateStageCamera() {
+		if (stage == null) return;
+		
+		var bg_color:Null<String> = stage.stageData.bg_color;
+		camGame.bgColor = (bg_color==null ? 0xFF999999 : FlxColor.fromString(bg_color)) ?? 0xFF999999;
+		camGame.zoom = stage.stageData.defaultZoom;
+
+		var camPos = stage.stageData.camera_stage;
+		if (camPos == null) camPos = [640, 360];
+
+		camFollow.set(camPos[0], camPos[1]);
+		camFollowPos.setPosition(camPos[0], camPos[1]);
+	}
+
 	function createTitleUI()
 	{
+		var tab_group = new FlxUI(null, UI_box);
+		tab_group.name = "Title Screen";
+		UI_box.addGroup(tab_group);
+
 		var group = new FlxTypedGroup<FlxBasic>();
-
-		////
 		var bgGroup = new FlxTypedGroup<Stage>(1);
-		group.add(bgGroup);
-
-		// Warning : Local variable might be used before being initialAAAAAAAA SHUT UP
-		var bg:Stage = null;
-		var logoBl:TitleLogo = null;
-
-		////
-		group.add(UI_box);
 
 		////
 		var titleNames = TitleState.TitleLogo.getTitlesList();
-		var titleStepper = new FlxUINumericStepper(10, 40, 1, 0, 0, titleNames.length-1, 0);
-		titleStepper.cameras = [camHUD];
-		group.add(titleStepper);
+		var titleLabels = FlxUIDropDownMenu.makeStrIdLabelArray(titleNames);
+		var titleDropdown = new CustomFlxUIDropDownMenu(140, 70, titleLabels);
 		
 		var stageNames = StageData.getAllStages();
-		var bgStepper = new FlxUINumericStepper(10, 70, 1, 0, 0, stageNames.length-1, 0);
-		bgStepper.cameras = [camHUD];
-		group.add(bgStepper);
+		var stageLabels = FlxUIDropDownMenu.makeStrIdLabelArray(stageNames);
+		var stageDropdown = new CustomFlxUIDropDownMenu(10, 70, stageLabels);
 
 		function updateShit(){
 			// Logo Update 
-			var newLogoName = titleNames[Std.int(titleStepper.value)];
+			var newLogoName = titleDropdown.selectedId;
 			if (logoBl != null && logoBl.logoName != newLogoName){
 				group.remove(logoBl).destroy();
 				logoBl = null;
@@ -213,34 +241,72 @@ class TestState extends MusicBeatState{
 				logoBl.time = 0;
 
 			// Stage Update 
-			var newStageName = stageNames[Std.int(bgStepper.value)];
+			var newStageName = stageDropdown.selectedId;
 
-			if (bg != null && bg.stageId != newStageName){
-				bgGroup.remove(bg).destroy();
-				bg = null;
-			}else if (bg != null)
+			if (stage != null && stage.stageId != newStageName){
+				bgGroup.remove(stage).destroy();
+				stage = null;
+			}else if (stage != null)
 				return;
 
-			bg = new Stage(newStageName).buildStage();
+			stage = new Stage(newStageName).buildStage();
+			updateStageCamera();
 
-			var bg_color:Null<String> = bg.stageData.bg_color;
-			camGame.bgColor = (bg_color==null ? 0xFF999999 : FlxColor.fromString(bg_color)) ?? 0xFF999999;
-			camGame.zoom = bg.stageData.defaultZoom;
-
-			var camPos = bg.stageData.camera_stage;
-			if (camPos == null) camPos = [640, 360];
-
-			camFollow.set(camPos[0], camPos[1]);
-			camFollowPos.setPosition(camPos[0], camPos[1]);
-
-			bgGroup.add(bg);
+			bgGroup.add(stage);
 		}
 
-		var changeButton = new FlxButton(10, 100, "Set", updateShit);
-		changeButton.cameras = [camHUD];
-		group.add(changeButton);
+		var changeButton = new FlxButton(90, 20, "Reload assets", updateShit);
 
-		updateShit();
+		group.add(bgGroup);
+		group.add(UI_box);
+
+		tab_group.add(new FlxText(titleDropdown.x, titleDropdown.y - 20, 0, "Logo"));
+		tab_group.add(titleDropdown);
+
+		tab_group.add(new FlxText(stageDropdown.x, stageDropdown.y - 20, 0, "Stage"));
+		tab_group.add(stageDropdown);
+
+		tab_group.add(changeButton);
+
+		return group;
+	}
+
+	function createCoolBGUI()
+	{
+		var tab_group = new FlxUI(null, UI_box);
+		tab_group.name = "Cool BG";
+		UI_box.addGroup(tab_group);
+
+		var group = new FlxTypedGroup<FlxBasic>();
+		group.add(UI_box);
+
+		final defaultColor = 0xff7F94FF;
+		
+		var bg = new funkin.objects.CoolMenuBG(Paths.image('menuDesat'), defaultColor);
+		bg.cameras = [camGame];
+
+		var colorpicker = new funkin.objects.ui.ColorPicker(10, 10, "Color", (newColor) -> bg.color = newColor, defaultColor);
+
+		var resetColorButton = new FlxButton(10, 40, "Reset Color", function() {
+			bg.color = defaultColor;
+			colorpicker.color = defaultColor;
+		});
+
+		var hideUIButton = new FlxButton(10, 70, "Hide UI", function() {
+			UI_box.exists = false;
+
+			updateFunction = function() {
+				if (FlxG.mouse.justMoved || FlxG.mouse.justPressed) {
+					UI_box.exists = true;
+					updateFunction = null;
+				}
+			};
+		});
+
+		group.add(bg);
+		tab_group.add(colorpicker);
+		tab_group.add(resetColorButton);
+		tab_group.add(hideUIButton);
 
 		return group;
 	}

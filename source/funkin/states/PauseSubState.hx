@@ -16,6 +16,7 @@ import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
 import flixel.util.FlxStringUtil;
 
+@:allow(funkin.states.options.OptionsSubstate)
 class PauseSubState extends MusicBeatSubstate
 {
 	public static var instance:PauseSubState = null;
@@ -272,7 +273,7 @@ class PauseSubState extends MusicBeatSubstate
 		if (md != null) {
 			pauseMusic = md.play(pauseMusic, 0.0);
 			pauseMusic.time = FlxG.random.float(pauseMusic.time, (pauseMusic.endTime ?? pauseMusic.length) * 0.5);
-			pauseMusic.fadeIn(5, 0, 0.75);
+			pauseMusic.fadeIn(5, 0, ClientPrefs.pauseVolume);
 		}else {
 			trace('Pause music not found: $songName');
 		}

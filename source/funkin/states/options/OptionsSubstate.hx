@@ -1,5 +1,6 @@
 package funkin.states.options;
 
+import funkin.objects.ui.ScrollBar;
 import funkin.states.options.IBindsMenu;
 import flixel.input.gamepad.FlxGamepadInputID;
 import flixel.input.keyboard.FlxKey;
@@ -48,6 +49,7 @@ class OptionsSubstate extends MusicBeatSubstate
 	static var tabOrder:Array<String> = [
 		"game",
 		"ui",
+		"sound",
 		"video",
 		"controls",
 		"misc", 
@@ -67,18 +69,6 @@ class OptionsSubstate extends MusicBeatSubstate
 					"noteOffset", 
 					"visualOffset", 
 					"ratingOffset",
-				]
-			],
-			[
-				"audio", 
-				[
-					"masterVolume",
-					"songVolume",
-					'sfxVolume',
-					"missVolume",
-					"hitsoundVolume", 
-					"hitsoundBehav",
-					#if tgt "ruin", #end
 				]
 			],
 			[
@@ -149,6 +139,21 @@ class OptionsSubstate extends MusicBeatSubstate
 					"showWifeScore"
 				]
 			]
+		],
+		"sound" => [
+			[
+				"audio", 
+				[
+					"masterVolume",
+					"songVolume",
+					"pauseVolume",
+					'sfxVolume',
+					"missVolume",
+					"hitsoundVolume", 
+					"hitsoundBehav",
+					#if tgt "ruin", #end
+				]
+			],
 		],
 		"video" => [
 			[
@@ -510,13 +515,17 @@ class OptionsSubstate extends MusicBeatSubstate
 					lastFlixelVolume = snappedVol;
 					FlxG.sound.showSoundTray(snappedVol > prevVol);
 				}
-
 			case 'sfxVolume':
 				playPreviewSound("scrollMenu", newVal * 0.01);
 			case 'missVolume':
 				playPreviewSound('missnote${1+Std.random(3)}', newVal * 0.01);
 			case 'hitsoundVolume':
 				playPreviewSound("hitsound", newVal * 0.01);
+			case 'pauseVolume':
+				if (PauseSubState.instance != null){
+					PauseSubState.instance.pauseMusic.fadeTween.cancel();
+					PauseSubState.instance.pauseMusic.volume = newVal * 0.01;
+				}
 		}
 	}
 
@@ -542,6 +551,8 @@ class OptionsSubstate extends MusicBeatSubstate
 	var optionCamera:FlxCamera;
 	var overlayCamera:FlxCamera;
 
+	var listScrollBar:ScrollBar;
+
 	var camFollow = new FlxPoint(0, 0);
 	var camFollowPos = new FlxObject(0, 0);
 
@@ -555,6 +566,10 @@ class OptionsSubstate extends MusicBeatSubstate
 	@:noCompletion var _mousePoint:FlxPoint = FlxPoint.get();
 
 	var optionDesc:FlxText;
+	
+	var tabLabel:FlxText;
+	var tabLabelIdx:Int = -1;
+	var tabButtonsHitbox:FlxObject;
 
 	public var camerasToRemove:Array<FlxCamera> = [];
 
@@ -576,9 +591,6 @@ class OptionsSubstate extends MusicBeatSubstate
 		changeNumber("masterVolume", Math.ffloor(val * 100), true);
 		ignoreVolumeChange = false;
 	}
-
-	var color1 = FlxColor.fromRGB(82, 82, 82);
-	var color2 = FlxColor.fromRGB(70, 70, 70);
 
 	override function create()
 	{
@@ -620,9 +632,9 @@ class OptionsSubstate extends MusicBeatSubstate
 		optionMenu = new FlxSprite(80, 80, CoolUtil.makeOutlinedGraphic(
 			FlxMath.minInt(920, FlxG.width), 
 			FlxG.height-140, 
-			color1, 
+			MenuStyle.WINDOW_COLOR1, 
 			2, 
-			color2
+			MenuStyle.WINDOW_COLOR2
 		));
 		if (FlxG.width - 160 < optionMenu.width + 160) optionMenu.x = Math.floor((FlxG.width - optionMenu.width)/2);
 		optionMenu.alpha = 0.6;
@@ -639,22 +651,32 @@ class OptionsSubstate extends MusicBeatSubstate
 		optionCamera.follow(camFollowPos);
 
 		////
-		final tabButtonHeight = 44;
+		listScrollBar = new ScrollBar(0, 0, optionCamera.maxScrollY, optionCamera.height, 8);
+		listScrollBar.camera = optionCamera;
+		listScrollBar.scrollFactor.set();
+		add(listScrollBar);
+
+		listScrollBar.callback = function(perc:Float) {
+			camFollow.y = CoolMath.scale(perc, 0, 1, 0, currentTab.height - optionCamera.height);
+			camFollowPos.y = camFollow.y;
+		}
+
+		////
+		final tabButtonWidth = 72;
+		final tabButtonHeight = 48;
 		final tabButtonPadding = 3;
 
 		var tabY:Float = optionMenu.y - tabButtonPadding - tabButtonHeight;
 		var tabX:Float = optionMenu.x;
 		inline function newTabButton(tabName:String)
 		{
-			var text = new FlxText(0, 0, 0, (Paths.getString('opt_tabName_$tabName') ?? tabName).toUpperCase());
-			text.applyFormat(TextFormats.TAB_NAME);
-			text.fieldWidth = Math.max(86, text.width) + 8;
-			@:privateAccess text.regenGraphic();
+			var text = new FlxSprite(0, 0, Paths.image('optionsMenu/tab_icons/$tabName'));
+			text.setGraphicSize(0, tabButtonHeight);
 			text.updateHitbox();
-			text.x = tabX;
+			text.x = tabX + (tabButtonWidth - text.width) / 2;
 			text.y = tabY + (tabButtonHeight - text.height) / 2;
 
-			var button = CoolUtil.blankSprite(text.fieldWidth, tabButtonHeight);
+			var button = CoolUtil.blankSprite(tabButtonWidth, tabButtonHeight);
 			button.alpha = 0.75;
 			button.x = tabX;
 			button.y = tabY;
@@ -665,6 +687,8 @@ class OptionsSubstate extends MusicBeatSubstate
 			tabButtons.push(button);
 		}
 
+		tabButtonsHitbox = new FlxObject(tabX, tabY, 0, tabButtonHeight);
+
 		for (tabName in tabOrder)
 		{
 			var tab = new TabInstance(tabName, tabLayouts.get(tabName));
@@ -673,11 +697,22 @@ class OptionsSubstate extends MusicBeatSubstate
 			newTabButton(tabName);
 		}
 
+		tabButtonsHitbox.width = tabX - tabButtonsHitbox.x;
+		add(tabButtonsHitbox);
+
+		tabLabel = new FlxText(5, FlxG.height - 48, 0);
+		tabLabel.applyFormat(MenuStyle.TAB_NAME);
+		tabLabel.textField.background = true;
+		tabLabel.textField.backgroundColor = FlxColor.BLACK;
+		tabLabel.cameras = [overlayCamera];
+		tabLabel.alpha = 0;
+		add(tabLabel);
+
 		dropdown = new Dropdown();
 		add(dropdown);
 
 		optionDesc = new FlxText(5, FlxG.height - 48, 0);
-		optionDesc.applyFormat(TextFormats.OPT_DESC);
+		optionDesc.applyFormat(MenuStyle.OPT_DESC);
 		optionDesc.textField.background = true;
 		optionDesc.textField.backgroundColor = FlxColor.BLACK;
 		optionDesc.cameras = [overlayCamera];
@@ -719,7 +754,7 @@ class OptionsSubstate extends MusicBeatSubstate
 		var daY:Float = 0;
 		inline function newLabel(label:String) {
 			var text = new FlxText(8, daY, 0, Paths.getString('opt_label_$label'), 16);
-			text.applyFormat(TextFormats.OPT_LABEL);
+			text.applyFormat(MenuStyle.OPT_CAT_LABEL);
 			group.add(text);
 
 			daY += text.height;
@@ -739,7 +774,7 @@ class OptionsSubstate extends MusicBeatSubstate
 			data.desc = Paths.getString('opt_desc_$opt') ?? data.desc;
 
 			var text = new FlxText(16, daY, 0, data.display);
-			text.applyFormat(TextFormats.OPT_NAME);
+			text.applyFormat(MenuStyle.OPT_NAME);
 
 			var height = Math.max(45, text.height + 12);
 			var rx = text.x - 12;
@@ -782,7 +817,7 @@ class OptionsSubstate extends MusicBeatSubstate
 		}
 
 		daY += 4;
-		tab.height = daY > optionCamera.height ? daY - optionCamera.height : 0;
+		tab.height = Math.max(0, daY);
 	}
 
 	function createWidget(name:String, drop:FlxSprite, text:FlxText, data:OptionData):Widget
@@ -809,7 +844,7 @@ class OptionsSubstate extends MusicBeatSubstate
 				checkbox.toggled = data.value;
 
 				var label = new FlxText(0, 0, 0, "", 16);
-				label.applyFormat(TextFormats.OPT_VALUE_TEXT);
+				label.applyFormat(MenuStyle.OPT_VALUE_TEXT);
 
 				widget.data.set("checkbox", checkbox);
 				widget.data.set("text", label);
@@ -839,7 +874,7 @@ class OptionsSubstate extends MusicBeatSubstate
 				objects.add(arrow);
 
 				var label = new FlxText(0, 0, 0, data.value, 16);
-				label.applyFormat(TextFormats.OPT_VALUE_TEXT);
+				label.applyFormat(MenuStyle.OPT_VALUE_TEXT);
 				objects.add(label);
 
 				widget.data.set("arrow", arrow);
@@ -901,7 +936,7 @@ class OptionsSubstate extends MusicBeatSubstate
 				objects.add(bar);
 
 				var label = new FlxText(0, 0, 0, "off", 16);
-				label.applyFormat(TextFormats.OPT_VALUE_TEXT);
+				label.applyFormat(MenuStyle.OPT_VALUE_TEXT);
 				objects.add(label);
 
 				var leftAdjust = new WidgetButton();
@@ -977,7 +1012,7 @@ class OptionsSubstate extends MusicBeatSubstate
 		for (idx in 0...tabButtons.length)
 		{
 			var butt = tabButtons[idx];
-			butt.color = idx == currentTabIdx ? color2 + FlxColor.fromRGB(60, 60, 60) : color2;
+			butt.color = idx == currentTabIdx ? MenuStyle.TAB_COLOR2 : MenuStyle.TAB_COLOR1;
 		}
 
 		remove(currentGroup);
@@ -991,6 +1026,9 @@ class OptionsSubstate extends MusicBeatSubstate
 
 		camFollow = currentTab.cameraPosition;
 		camFollowPos.setPosition(camFollow.x, camFollow.y);
+
+		listScrollBar.setPageSize(currentTab.height, optionCamera.height, 6);
+		listScrollBar.x = optionCamera.width - listScrollBar.width;
 
 		////
 		selectableWidgetObjects = [
@@ -1360,9 +1398,9 @@ class OptionsSubstate extends MusicBeatSubstate
 			
 			if (idx == nextOption) {
 				nextWidget = currentWidgets.get(object);
-				object.color = FlxColor.YELLOW;
+				object.color = MenuStyle.OPT_NAME_COLOR2;
 			}else {
-				object.color = TextFormats.OPT_NAME.color;
+				object.color = MenuStyle.OPT_NAME.color;
 			}
 		}
 
@@ -1509,14 +1547,40 @@ class OptionsSubstate extends MusicBeatSubstate
 			else if (FlxG.mouse.justPressed)
 			{
 				doUpdate = true;
+			}
+
+			if (FlxG.mouse.overlaps(tabButtonsHitbox, mainCamera)) {
 				for (idx => button in tabButtons) {
-					if (FlxG.mouse.overlaps(button, mainCamera)) {
+					if (!FlxG.mouse.overlaps(button, mainCamera))
+						continue;
+
+					if (FlxG.mouse.justPressed) {
 						changeTab(idx, true);
 						doUpdate = true;
 						pHov = null;
-						break;
 					}
+					
+					if (idx != tabLabelIdx) {
+						tabLabelIdx = idx;
+
+						var tabId:String = tabOrder[idx];
+						tabLabel.text = Paths.getString('opt_tabName_$tabId') ?? tabId;
+						tabLabel.updateHitbox();
+						tabLabel.setPosition(button.x + (button.width - tabLabel.width) / 2, button.y + button.height);			
+						tabLabel.alpha = 0;
+					}
+
+					break;
 				}
+			}else {
+				tabLabelIdx = -1;
+			}
+
+			if (tabLabelIdx != -1) {
+				tabLabel.alpha += elapsed / 0.2;
+				//tabLabel.setPosition(FlxG.mouse.screenX, FlxG.mouse.screenY - tabLabel.height - 4);
+			}else {
+				tabLabel.alpha -= elapsed / 0.2;
 			}
 
 			var movedMouse = FlxG.mouse.wheel != 0 || getMouseMoved();
@@ -1577,15 +1641,17 @@ class OptionsSubstate extends MusicBeatSubstate
 				camFollowPos.y += movement;
 			}
 
-			var height = currentTab.height;
-			camFollow.y = FlxMath.bound(camFollow.y, 0, height);
+			var maxY = Math.max(currentTab.height - optionCamera.height, 0);
+			camFollow.y = FlxMath.bound(camFollow.y, 0, maxY);
 
 			var lerpVal = Math.exp(-elapsed * 12);
 			camFollowPos.setPosition(
 				FlxMath.lerp(camFollow.x, camFollowPos.x, lerpVal), 
 				FlxMath.lerp(camFollow.y, camFollowPos.y, lerpVal)
 			);
-			camFollowPos.y = FlxMath.bound(camFollowPos.y, 0, height);
+			camFollowPos.y = FlxMath.bound(camFollowPos.y, 0, maxY);
+
+			listScrollBar.progress = CoolMath.scale(camFollowPos.y, 0, currentTab.height - optionCamera.height, 0, 1);
 
 			if (controls.BACK)
 			{
@@ -1657,7 +1723,8 @@ class Dropdown extends FlxTypedGroup<FlxBasic>
 		super();
 
 		ddCamera = new FlxCamera();
-		ddCamera.bgColor = FlxColor.fromRGB(0x80, 0x80, 0x80, 204);
+		ddCamera.bgColor = MenuStyle.WINDOW_COLOR1;
+		ddCamera.bgColor.alpha = 204;
 		ddCamera.alpha = 0;
 		FlxG.cameras.add(ddCamera, false);
 
@@ -1702,7 +1769,7 @@ class Dropdown extends FlxTypedGroup<FlxBasic>
 		// ddCamera.alpha = 1;
 
 		if (curSelected != -1) {
-			labels[curSelected].color = 0xFFFFFFFF;
+			labels[curSelected].color = MenuStyle.OPT_NAME_COLOR1;
 			curSelected = -1;
 		}
 	}
@@ -1716,7 +1783,7 @@ class Dropdown extends FlxTypedGroup<FlxBasic>
 	public function changeSelected(val:Int, isAbs:Bool = false)
 	{
 		if (curSelected != -1)
-			labels[curSelected].color = 0xFFFFFFFF;
+			labels[curSelected].color = MenuStyle.OPT_NAME_COLOR1;
 
 		if (isAbs)
 			curSelected = val;
@@ -1726,7 +1793,7 @@ class Dropdown extends FlxTypedGroup<FlxBasic>
 			curSelected = CoolUtil.updateIndex(curSelected, val, options.length);
 		
 		if (curSelected != -1)
-			labels[curSelected].color = 0xFFFFFF00;
+			labels[curSelected].color = MenuStyle.OPT_NAME_COLOR2;
 	}
 
 	public function updateInput(elapsed:Float):Null<Int> {
@@ -1763,7 +1830,7 @@ class Dropdown extends FlxTypedGroup<FlxBasic>
 	private function makeText() {
 		var text = new FlxText(0, 0, 0, '', 16);
 		text.cameras = this.cameras;
-		text.applyFormat(TextFormats.OPT_DROPDOWN_OPTION_TEXT);
+		text.applyFormat(MenuStyle.OPT_DROPDOWN_OPTION_TEXT);
 		return text;
 	}
 
@@ -1958,7 +2025,6 @@ class Checkbox extends WidgetSprite
 	function set_toggled(val:Bool)
 	{
 		animation.play(val ? "toggled" : "idle", true);
-		offset.set(val ? 2.25 : 0, val ? 4.35 : 0);
 		return toggled = val;
 	}
 
@@ -1974,53 +2040,4 @@ class Checkbox extends WidgetSprite
 
 		toggled = defaultToggled;
 	}
-}
-
-class TextFormats {
-	public static final TAB_NAME:FlxTextFormatData = {
-		font: "vcr.ttf",
-		pixelPerfectRender: true,
-
-		size: 32,
-		color: 0xFFFFFFFF,
-		alignment: CENTER
-	};
-	
-	public static final OPT_LABEL:FlxTextFormatData = {
-		font: "vcr.ttf",
-		size: 28,
-		color: 0xFFFFFFFF,
-		alignment: LEFT
-	};
-	
-	public static final OPT_NAME:FlxTextFormatData = {
-		font: "quantico.ttf",	
-		size: 22,
-		color: 0xFFFFFFFF,
-		alignment: LEFT
-	};
-
-	public static final OPT_VALUE_TEXT:FlxTextFormatData = {
-		font: "quantico.ttf",
-		size: 18,
-		color: 0xFFFFFFFF,
-		alignment: LEFT
-	};
-	
-	public static final OPT_DROPDOWN_OPTION_TEXT:FlxTextFormatData = {
-		font: "quantico.ttf",
-		size: 18,
-		color: 0xFFFFFFFF,
-	};
-
-	public static final OPT_DESC:FlxTextFormatData = {
-		font: "vcr.ttf",
-		pixelPerfectRender: true,	
-		size: 16,
-		color: 0xFFFFFFFF,
-		alignment: CENTER,
-	
-		borderStyle: OUTLINE,
-		borderColor: 0xFF000000
-	};
 }

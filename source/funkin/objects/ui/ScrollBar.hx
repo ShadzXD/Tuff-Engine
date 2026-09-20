@@ -48,7 +48,7 @@ class ScrollBar extends FlxSprite {
 		this.setPageSize(pageHeight, viewHeight, barWidth);
 	}
 
-	function setPageSize(pageHeight:Float, viewHeight:Float, ?barWidth:Float) {
+	public function setPageSize(pageHeight:Float, viewHeight:Float, ?barWidth:Float) {
 		this.pageHeight = pageHeight;
 		this.viewHeight = viewHeight;
 

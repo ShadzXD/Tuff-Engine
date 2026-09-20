@@ -1,17 +1,16 @@
 package funkin.states;
 
-import flixel.*;
-import flixel.group.FlxGroup;
-import flixel.group.FlxSpriteGroup;
-import flixel.input.gamepad.FlxGamepadInputID;
-import flixel.input.keyboard.FlxKey;
-import flixel.math.*;
-import flixel.system.FlxAssets.FlxSoundAsset;
-import flixel.text.FlxText;
-import flixel.tweens.FlxEase;
-import flixel.tweens.FlxTween;
-import flixel.util.*;
-import flixel.util.FlxSignal;
+import funkin.data.content.PackManager;
+import funkin.objects.notes.NoteAnimations;
+import funkin.objects.cutscenes.Cutscene;
+#if VIDEOS_ALLOWED
+import hxvlc.flixel.FlxVideo;
+import funkin.objects.cutscenes.VideoCutscene;
+#end
+import funkin.objects.cutscenes.DialogueCutscene;
+import funkin.objects.playfields.PlayField.NoteCallback;
+import funkin.data.Cache;
+import funkin.data.Level;
 import funkin.data.BaseSong;
 import funkin.data.Cache;
 import funkin.data.CharacterData;
@@ -45,8 +44,20 @@ import funkin.states.base.VideoPlayerState;
 import funkin.states.editors.CharacterEditorState;
 import funkin.states.editors.ChartingState;
 import funkin.states.options.OptionsSubstate;
-import openfl.events.KeyboardEvent;
-import funkin.data.Scoring;
+import funkin.scripts.*;
+import flixel.*;
+import flixel.util.*;
+import flixel.util.FlxSignal;
+import flixel.math.*;
+import flixel.tweens.FlxTween;
+import flixel.tweens.FlxEase;
+import flixel.system.FlxAssets.FlxSoundAsset;
+import funkin.states.base.TransitionableState;
+import flixel.group.FlxGroup;
+import flixel.group.FlxSpriteGroup;
+import flixel.input.keyboard.FlxKey;
+import flixel.input.gamepad.FlxGamepadInputID;
+import flixel.text.FlxText;
 
 using CoolerStringTools;
 using StringTools;
@@ -1868,8 +1879,8 @@ class PlayState extends MusicBeatState
 		return event;
 	}
 
-	function eventNoteEarlyTrigger(event:EventInstanceData):Float {
-		var ret:Dynamic = callOnScripts('eventEarlyTrigger', [event]);
+	function eventNoteEarlyTrigger(event:PsychEvent):Float {
+		var ret:Dynamic = callOnScripts('eventEarlyTrigger', [event.event, event.value1, event.value2]);
 		if (ret != null && (ret is Int || ret is Float))
 			return ret;
 

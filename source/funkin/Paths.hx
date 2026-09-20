@@ -50,7 +50,6 @@ class Paths
 		'$CONTENT_PATH/global/music/freakyIntro.$SOUND_EXT',
 		'$CONTENT_PATH/global/music/freakyMenu.$SOUND_EXT',
 		'$CONTENT_PATH/global/music/breakfast.$SOUND_EXT',
-		'$ASSETS_PATH/images/Garlic-Bread-PNG-Images.$IMAGE_EXT'
 	];
 	public static var graphicDumpExclusions:Array<FlxGraphic> = [];
 	public static var soundDumpExclusions:Array<Sound> = [];

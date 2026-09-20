@@ -1,5 +1,6 @@
 package funkin.data.content;
 
+#if USING_MOONCHART
 import funkin.data.BaseSong;
 import funkin.data.Moonchart;
 import moonchart.Moonchart;
@@ -95,3 +96,4 @@ class MoonchartFolder extends Pack
 		return songList;
 	}
 }
+#end

@@ -458,14 +458,12 @@ class FunkinHScript
 	}
 
 	inline function traceException(e:Dynamic):Void {
-		final str = e.toString();
+		var posInfo = interpreter.posInfos();
+		var str = (e is haxe.Exception) ? (e:haxe.Exception).message : Std.string(e);
+		str = trim_redundant_error_trace(str, posInfo);
+		str = haxe.Log.formatOutput(str, posInfo);
 		print(str);
 		DebugLog.addMessage(str, 0xFFFF0000);
-		/*
-		var posInfo = interpreter.posInfos();
-		var message = trim_redundant_error_trace(e.message, posInfo);
-		print(haxe.Log.formatOutput(message, posInfo));
-		*/
 	}
 
 	public function get(varName:String):Dynamic
