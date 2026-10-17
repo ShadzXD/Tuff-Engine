@@ -1,9 +1,10 @@
 package funkin.data;
 
-import funkin.objects.Character;
 import flixel.util.FlxColor;
-import funkin.data.VSliceCharacterData;
 import funkin.data.AndromedaCharacterData;
+import funkin.data.VSliceCharacterData;
+import funkin.objects.Character;
+
 using StringTools;
 
 typedef CharacterFile = {
