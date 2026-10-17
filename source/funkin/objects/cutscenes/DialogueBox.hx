@@ -63,7 +63,7 @@ class DialogueBox extends FlxSprite {
 	}
 
 	function loadJSON() {
-		frames = Paths.sparrowAtlas(jsonFile.graphic);
+		frames = Paths.sparrowAtlas(jsonFile.image);
 
 		for (anim in jsonFile.animations)
 			animation.addByPrefix(anim.animName, anim.animPrefix, anim.fps, anim.looped);
