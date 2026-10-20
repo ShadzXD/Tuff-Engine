@@ -25,6 +25,8 @@ import flixel.text.FlxText;
 import flixel.ui.FlxButton;
 import flixel.util.FlxColor;
 import haxe.Json;
+import lime.ui.MouseCursor;
+import lime.app.Application;
 
 using StringTools;
 
@@ -143,7 +145,7 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 	var curAnim:Int = 0;
 	var charName:String = 'pico';
 	var camFollow:FlxObject;
-
+	var editorMouse:MouseCursor;
 	public function new(charName:String = 'pico', goToPlayState:Bool = true) {
 		super();
 		this.charName = charName;
@@ -171,7 +173,6 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 
 	override function create() {
 		// FlxG.sound.playMusic(Paths.music('breakfast'), 0.5);
-
 		camEditor = new FlxCamera();
 		camEditor.bgColor = 0xFF999999;
 		camHUD = new FlxCamera();
@@ -1217,6 +1218,9 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 				return;
 			}
 		}
+
+		Application.current.window.cursor = editorMouse;
+
 		FNFGame.specialKeysEnabled = true;
 
 		if (testMode) {
@@ -1255,6 +1259,8 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 				return;
 			}
 
+			editorMouse = DEFAULT;
+
 			if(FlxG.keys.pressed.CONTROL && FlxG.keys.pressed.S) {
 				saveCharacter();
 			}
@@ -1264,6 +1270,7 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 			}
 
 			if(FlxG.mouse.pressedRight) {
+				editorMouse = POINTER;
 				changeCurOffset(-FlxG.mouse.deltaScreenX, -FlxG.mouse.deltaScreenY);
 			}
 		
@@ -1281,6 +1288,7 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 			}
 
 			if (FlxG.mouse.pressedMiddle) {
+				editorMouse = MOVE;
 				camFollow.x -= FlxG.mouse.deltaScreenX;
 				camFollow.y -= FlxG.mouse.deltaScreenY;
 			}
