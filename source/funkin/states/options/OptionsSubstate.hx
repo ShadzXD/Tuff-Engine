@@ -1527,10 +1527,18 @@ class OptionsSubstate extends MusicBeatSubstate
 				doUpdate = true;
 			}
 
-			if (FlxG.keys.justPressed.TAB){
+			if (FlxG.keys.justPressed.Q) {
+				FlxG.sound.play(Paths.sound("scrollMenu"));
+				changeTab(-1);
+
+				doUpdate = true;
+				pHov = null;
+			}
+
+			if (FlxG.keys.justPressed.E || FlxG.keys.justPressed.TAB) {
 				FlxG.sound.play(Paths.sound("scrollMenu"));
 				changeTab(1);
-				
+
 				doUpdate = true;
 				pHov = null;
 			}
