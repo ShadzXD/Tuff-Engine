@@ -243,7 +243,7 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 			
 			var tipTextArray = texts.split('\n');
 			for (i => str in tipTextArray) {
-				var tipText:FlxText = new FlxText(FlxG.width - 320, FlxG.height - 15 - 16 * (tipTextArray.length - i), 300, str, 12);
+				var tipText:FlxText = new FlxText(FlxG.width - 420, FlxG.height - 15 - 14 * (tipTextArray.length - i), 400, str, 12);
 				tipText.setFormat(null, 12, FlxColor.WHITE, RIGHT);
 				tipText.setBorderStyle(FlxTextBorderStyle.OUTLINE_FAST, FlxColor.BLACK, 1);
 				tipText.scrollFactor.set();
@@ -253,13 +253,14 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 		}
 
 		tipTexts = makeTipTexts(
-			"E/Q - Camera Zoom In/Out
+			"Scroll Wheel / EQ - Camera Zoom In/Out
 			\nR - Reset Camera Zoom
-			\nIJKL - Move Camera
+			\nMiddle Click / IJKL - Move Camera
 			\nW/S - Previous/Next Animation
 			\nSpace - Play Animation
-			\nArrow Keys - Move Character Offset
+			\nRight Click / Arrow Keys - Move Character Offset
 			\nT - Reset Current Offset
+			\nCTRL + S - Quick Save
 			\nHold SHIFT to Move 10x faster\n"
 		);
 
@@ -1002,7 +1003,7 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 			text.text = label;
 			text.setPosition(10, 20 + (18 * i));
 			text.setFormat(null, 16, color, CENTER);
-			text.setBorderStyle(FlxTextBorderStyle.OUTLINE, FlxColor.BLACK, 1);
+			text.setBorderStyle(FlxTextBorderStyle.OUTLINE_FAST, FlxColor.BLACK, 1);
 			text.scrollFactor.set();
 			animTexts.add(text);
 			return text;
@@ -1254,19 +1255,34 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 				return;
 			}
 
+			if(FlxG.keys.pressed.CONTROL && FlxG.keys.pressed.S) {
+				saveCharacter();
+			}
+
 			if (FlxG.keys.justPressed.R) {
 				resetCam();
 			}
 
-			if (FlxG.keys.pressed.E && FlxG.camera.zoom < 3) {
-				FlxG.camera.zoom += elapsed * FlxG.camera.zoom;
-				if (FlxG.camera.zoom > 3)
-					FlxG.camera.zoom = 3;
+			if(FlxG.mouse.pressedRight) {
+				changeCurOffset(-FlxG.mouse.deltaScreenX, -FlxG.mouse.deltaScreenY);
 			}
-			if (FlxG.keys.pressed.Q && FlxG.camera.zoom > 0.1) {
-				FlxG.camera.zoom -= elapsed * FlxG.camera.zoom;
-				if (FlxG.camera.zoom < 0.1)
-					FlxG.camera.zoom = 0.1;
+		
+			if (FlxG.keys.pressed.E) {
+				updateCamZoom(elapsed * FlxG.camera.zoom);
+			}
+
+			if (FlxG.keys.pressed.Q) {
+				updateCamZoom(-1 * (elapsed * FlxG.camera.zoom));
+			}
+			
+			if (FlxG.mouse.wheel != 0) {
+				// i think im losing my mind
+				updateCamZoom(30 * (FlxG.mouse.wheel * (elapsed * FlxG.camera.zoom)));
+			}
+
+			if (FlxG.mouse.pressedMiddle) {
+				camFollow.x -= FlxG.mouse.deltaScreenX;
+				camFollow.y -= FlxG.mouse.deltaScreenY;
 			}
 
 			if (FlxG.keys.pressed.I || FlxG.keys.pressed.J || FlxG.keys.pressed.K || FlxG.keys.pressed.L) {
@@ -1287,17 +1303,18 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 
 			if (char.animationsArray.length > 0) {
 				var replayAnim = FlxG.keys.justPressed.SPACE;
-
-				if (FlxG.keys.justPressed.W) {
-					curAnim -= 1;
-					replayAnim = true;
+				// dont allow holding control so we can do quick saving
+				if(!FlxG.keys.pressed.CONTROL) {
+					if (FlxG.keys.justPressed.W) {
+						curAnim -= 1;
+						replayAnim = true;
+					}
+					if (FlxG.keys.justPressed.S) {
+						curAnim += 1;
+						replayAnim = true;
+					}
 				}
-
-				if (FlxG.keys.justPressed.S) {
-					curAnim += 1;
-					replayAnim = true;
-				}
-
+				
 				if (curAnim < 0)
 					curAnim = char.animationsArray.length - 1;
 
@@ -1330,7 +1347,18 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 
 		super.update(elapsed);
 	}
+	function updateCamZoom(_v:Float) {
+		//im a bellend
+		if (FlxG.camera.zoom <= 0.1) {
+			FlxG.camera.zoom = 0.1;
+		}
 
+		if(FlxG.camera.zoom >= 3) {
+			FlxG.camera.zoom = 3;
+		}
+
+		FlxG.camera.zoom += _v;
+	}
 	function onSaveComplete(_):Void {
 		FlxG.log.notice("Successfully saved file.");
 	}
