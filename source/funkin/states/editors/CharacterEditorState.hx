@@ -592,13 +592,20 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 					offsets: lastOffsets,
 					cameraOffset: [animationXCam.value, animationYCam.value]
 				};
-
-				if (indices != null && indices.length > 0) {
-					char.animation.addByIndices(newAnim.anim, newAnim.name, newAnim.indices, "", newAnim.fps, newAnim.loop);
+				if (!char.isAnimate) {
+					if (indices != null && indices.length > 0) 
+						char.animation.addByIndices(newAnim.anim, newAnim.name, newAnim.indices, "", newAnim.fps, newAnim.loop);
+					else 
+						char.animation.addByPrefix(newAnim.anim, newAnim.name, newAnim.fps, newAnim.loop);	
+				#if USING_FLXANIMATE
 				} else {
-					char.animation.addByPrefix(newAnim.anim, newAnim.name, newAnim.fps, newAnim.loop);
-				}
-
+					if (indices != null && indices.length > 0) 
+						char.anim.addBySymbolIndices(newAnim.anim, newAnim.name, newAnim.indices, newAnim.fps, newAnim.loop);
+					else 
+						char.anim.addBySymbol(newAnim.anim, newAnim.name, newAnim.fps, newAnim.loop);
+					
+				}	
+				#end
 				if (!char.animOffsets.exists(newAnim.anim))
 					char.addOffset(newAnim.anim, 0, 0);
 
@@ -672,7 +679,7 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 		// tab_group.add(new FlxText(animationDropDown.x, animationDropDown.y - 18, 0, 'Animations:'));
 		tab_group.add(new FlxText(animationInputText.x, animationInputText.y - 15, 0, 'Animation name:'));
 		tab_group.add(new FlxText(animationNameFramerate.x, animationNameFramerate.y - 15, 0, 'Framerate:'));
-		tab_group.add(new FlxText(animationNameInputText.x, animationNameInputText.y - 15, 0, 'Animation on .XML/.TXT file:'));
+		tab_group.add(new FlxText(animationNameInputText.x, animationNameInputText.y - 15, 0, 'Animation on file:'));
 		tab_group.add(new FlxText(animationIndicesInputText.x, animationIndicesInputText.y - 15, 0, 'ADVANCED - Animation Indices:'));
 
 		tab_group.add(animationInputText);
@@ -961,7 +968,7 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 				trace(e.details());
 			}
 		}
-
+		trace(char.imageFile );
 		if (Paths.fileExists('images/' + char.imageFile + '/Animation.json', TEXT)) {
 			char.frames = Paths.animateAtlas(char.imageFile);
 		} else if (Paths.fileExists('images/' + char.imageFile + '.txt', TEXT)) {
@@ -978,10 +985,20 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 				var looped:Bool = !!anim.loop; // Bruh
 				var indices:Array<Int> = anim.indices;
 
-				if (indices != null && indices.length > 0)
-					char.animation.addByIndices(name, prefix, indices, "", framerate, looped);
-				else
-					char.animation.addByPrefix(name, prefix, framerate, looped);
+				if (!char.isAnimate) {
+					if (indices != null && indices.length > 0)
+						char.animation.addByIndices(name, prefix, indices, "", framerate, looped);
+					else
+						char.animation.addByPrefix(name, prefix, framerate, looped);
+				}
+				#if USING_FLXANIMATE
+				else {
+					if (indices != null && indices.length > 0)
+						char.anim.addBySymbolIndices(name, prefix, indices, framerate, looped);
+					else
+						char.anim.addBySymbol(name, prefix, framerate, looped);
+				}
+				#end
 			}
 		} else {
 			char.quickAnimAdd('idle', 'BF idle dance');
