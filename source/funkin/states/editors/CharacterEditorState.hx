@@ -1300,8 +1300,7 @@ class CharacterEditorState extends funkin.states.base.CustomFlxUIState {
 			}
 			
 			if (FlxG.mouse.wheel != 0) {
-				// i think im losing my mind
-				updateCamZoom(30 * (FlxG.mouse.wheel * (elapsed * FlxG.camera.zoom)));
+				updateCamZoom(FlxG.mouse.wheel * (0.1 * FlxG.camera.zoom));
 			}
 
 			if (FlxG.mouse.pressedMiddle) {
