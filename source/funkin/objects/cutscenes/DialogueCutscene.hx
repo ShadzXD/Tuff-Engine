@@ -7,6 +7,8 @@ class DialogueCutscene extends Cutscene {
 	public var box:DialogueBox;
 	public var dialogue:String;
 
+	var ended:Bool = false;
+
 	public function new(_path:String) {
 		super();
 		this.dialogue = _path;
@@ -20,8 +22,15 @@ class DialogueCutscene extends Cutscene {
 
 	override function update(elapsed:Float) {
 		super.update(elapsed);
-		if (controls.ACCEPT)
+		if (controls.ACCEPT && !ended) {
 			box.progress();
+
+			if (box.curLine >= box.dialogueFile.dialogue.length) {
+				onEnd.dispatch(false);
+				ended = true;
+				return;
+			}
+		}
 	}
 
 	override public function restart() {

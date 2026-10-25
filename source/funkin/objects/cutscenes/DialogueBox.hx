@@ -44,7 +44,8 @@ class DialogueBox extends FlxTypedGroup<FlxBasic> {
 
 	public var curLine:Int = 0;
 
-	var dialogueFile:DialogueFile;
+	public var dialogueFile:DialogueFile;
+
 	var dialogueText:Dynamic;
 	var box:DialogueBoxSprite;
 	var curCharacter:DialogueCharacter;
@@ -138,25 +139,25 @@ class DialogueBox extends FlxTypedGroup<FlxBasic> {
 		trace('trying to progress');
 		if (!canProgressDialogue)
 			return;
+		#if USING_TEXTBOX
 		if (finishedLine) {
-			#if USING_TEXTBOX
 			curLine++;
 			createNewLine();
-			#else
-			if (finishedLine) {
-				curLine++;
-				createNewLine();
-			} else {
-				skipCurLine();
-			}
-			#end
 		}
+		#else
+		if (finishedLine) {
+			curLine++;
+			createNewLine();
+		} else {
+			skipCurLine();
+		}
+		#end
 	}
 
 	/**
 	 * Function thats called when a line of dialogue is skipped mid sentence.
 	 */
-	private function skipCurLine() {
+	function skipCurLine() {
 		box?.script?.call("onSkipLine");
 		#if !USING_TEXTBOX
 		dialogueText.skip();
@@ -175,8 +176,7 @@ class DialogueBox extends FlxTypedGroup<FlxBasic> {
 			return;
 		}
 		finishedLine = false;
-		var curDialogueLine:DialogueLine;
-		curDialogueLine = dialogueFile.dialogue[curLine];
+		var curDialogueLine:DialogueLine = dialogueFile.dialogue[curLine];
 
 		playBoxAnimation(curDialogueLine.box_animation);
 
@@ -216,9 +216,9 @@ class DialogueBox extends FlxTypedGroup<FlxBasic> {
 	public function endDialogue(wasSkipped:Bool) {
 		box?.script?.call("onDialogueEnded");
 
-		new FlxTimer().start(1, function(tmr:FlxTimer) {
-			destroy();
-		});
+		// new FlxTimer().start(1, function(tmr:FlxTimer) {
+		//		destroy();
+		//	});
 	}
 
 	/**
