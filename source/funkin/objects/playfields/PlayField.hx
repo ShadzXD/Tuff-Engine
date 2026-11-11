@@ -136,7 +136,6 @@ class PlayField extends FlxTypedGroup<FlxBasic>
 		this.keyCount = keyCount ?? PlayState.keyCount;
 
 		grpNoteSplashes = new FlxTypedGroup<NoteSplash>();
-		grpNoteSplashes.visible = false; // so they dont get drawn
 		add(grpNoteSplashes);
 
 		strumAttachments = new FlxTypedGroup<NoteObject>();
@@ -144,8 +143,7 @@ class PlayField extends FlxTypedGroup<FlxBasic>
 		add(strumAttachments);
 
 		var splash:NoteSplash = new NoteSplash(100, 100, 0);
-		splash.handleRendering = false;
-		splash.alpha = 0.0;
+		splash.alpha = 0.00001;
 		grpNoteSplashes.add(splash);
 
 		////
