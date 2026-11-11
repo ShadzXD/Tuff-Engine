@@ -1,24 +1,20 @@
 package funkin.states;
 
 import funkin.data.CreditsOption;
-
 import flixel.*;
 import flixel.math.*;
 import flixel.text.FlxText;
 import flixel.tweens.*;
 import flixel.util.FlxColor;
-
 #if DISCORD_ALLOWED
 import funkin.api.Discord.DiscordClient;
 #end
 
 using StringTools;
 
-class CreditsState extends MusicBeatState
-{	
+class CreditsState extends MusicBeatState {
 	// Removed usehttp since engine no longer has credits baseline
 	// Maybe we could add it back some day w/ github contributors n shit tho
-
 	var hintBg:FlxSprite;
 	var descText:FlxText;
 	var moveTween:FlxTween;
@@ -46,17 +42,16 @@ class CreditsState extends MusicBeatState
 		this.dataArray = options ?? listFromPath(Paths.getPath('data/credits.txt'));
 	}
 
-	override function create()
-	{
+	override function create() {
 		#if DISCORD_ALLOWED
 		// Updating Discord Rich Presence
 		DiscordClient.changePresence({details: "In the Menus"});
 		#end
 
 		persistentUpdate = true;
-		
+
 		Paths.clearStoredMemory();
-		
+
 		FlxG.camera.follow(camFollowPos);
 		FlxG.camera.bgColor = FlxColor.BLACK;
 
@@ -76,8 +71,8 @@ class CreditsState extends MusicBeatState
 		hintBg.scale.set(FlxG.width - 100, 120);
 		hintBg.updateHitbox();
 		hintBg.screenCenter(X);
-		hintBg.color = 0xFF000000;
-		hintBg.alpha = 0.0;
+		hintBg.color = 0xFF480024;
+		hintBg.alpha = 0.6;
 		hintBg.scrollFactor.set();
 		add(hintBg);
 
@@ -86,7 +81,7 @@ class CreditsState extends MusicBeatState
 		descText.scrollFactor.set();
 		descText.alpha = 0;
 		add(descText);
-		
+
 		super.create();
 		curSelected = 0;
 		changeSelection(0);
@@ -111,15 +106,13 @@ class CreditsState extends MusicBeatState
 		if (!isAbs && val != 0)
 			FlxG.sound.play(Paths.sound("scrollMenu"), 0.4);
 
-		for (id in 0...titleArray.length)
-		{
+		for (id in 0...titleArray.length) {
 			var difference = Math.abs(curSelected - id);
 			var br = 1 - (difference * 0.15 + (difference > 0 ? 0.05 : 0.0));
-			
 			var title:Alphabet = titleArray[id];
 			if (title != null) {
 				var data:CreditsOption = dataArray[title.ID];
-				
+
 				if (!data.centered)
 					title.targetX = 90 + difference * -20;
 				if (data.selectable) {
@@ -127,10 +120,10 @@ class CreditsState extends MusicBeatState
 					title.color = (difference > 0) ? 0xFF000000 : 0xFFFFFFFF;
 				}
 			}
-				
+
 			var icon:AttachedSprite = iconArray[id];
-			if (icon != null){
-				icon.color = FlxColor.fromRGBFloat(br,br,br);
+			if (icon != null) {
+				icon.color = FlxColor.fromRGBFloat(br, br, br);
 				icon.alpha = title.alpha;
 			}
 		}
@@ -146,22 +139,29 @@ class CreditsState extends MusicBeatState
 		var songTitle = new Alphabet(0, textSpacing * id, data.text, data.bold);
 		songTitle.ID = id;
 		titleArray[id] = songTitle;
-		
+
 		if (data.centered) {
 			songTitle.screenCenter(X);
 			songTitle.targetX = songTitle.x;
-		}
-		else {
+		} else {
 			songTitle.x = 90 + (1 + Math.abs(curSelected - id)) * 30;
 			songTitle.targetX = 90;
+			// ripped this from the psych engine server, because it was crashing with my implementation
+			// credits to sword_352
+			songTitle.forEach(char -> char.colorTransform.redOffset = char.colorTransform.greenOffset = char.colorTransform.blueOffset = 255);
+
+			var bgBar:FlxSprite = new FlxSprite(songTitle.targetX - 50, songTitle.y - 20).makeGraphic(FlxG.width, 110, FlxColor.BLACK);
+			bgBar.updateHitbox();
+			bgBar.alpha = 0.7;
+			add(bgBar);
 		}
 
 		var iconPath = "credits/" + data.icon;
-		if (Paths.image(iconPath) != null){
+		if (Paths.image(iconPath) != null) {
 			var songIcon = new AttachedSprite(iconPath);
 
-			songIcon.xAdd = songTitle.width + 15; 
-			songIcon.yAdd = (-songIcon.height / 2) + 15;
+			songIcon.xAdd = songTitle.width + 10;
+			songIcon.yAdd = (-songIcon.height / 2) + 40;
 			songIcon.sprTracker = songTitle;
 
 			iconArray[id] = songIcon;
@@ -176,7 +176,7 @@ class CreditsState extends MusicBeatState
 			moveTween?.cancel();
 			descText.alpha = 0;
 			descText.text = "";
-		}else{
+		} else {
 			descText.text = text;
 
 			hintBg.scale.y = 30 + descText.height;
@@ -193,22 +193,21 @@ class CreditsState extends MusicBeatState
 			var ety = descText.y;
 			var sba = hintBg.alpha;
 			moveTween?.cancel();
-			moveTween = FlxTween.num(0, 1, 0.25, {ease: FlxEase.sineOut}, function(v){
+			moveTween = FlxTween.num(0, 1, 0.25, {ease: FlxEase.sineOut}, function(v) {
 				hintBg.y = FlxMath.lerp(sby, eby, v);
 				descText.y = FlxMath.lerp(sty, ety, v);
 				hintBg.alpha = FlxMath.lerp(sba, 0.6, v);
 			});
 		}
 	}
-	
-	override function update(elapsed:Float)
-	{
+
+	override function update(elapsed:Float) {
 		if (FlxG.sound.music != null) {
-			var targetVolume:Float =  0.7;
+			var targetVolume:Float = 0.7;
 
 			if (FlxG.sound.music.volume < targetVolume)
 				FlxG.sound.music.volume += 0.5 * FlxG.elapsed;
-			
+
 			if (FlxG.sound.music.volume > targetVolume)
 				FlxG.sound.music.volume = targetVolume;
 		}
@@ -216,84 +215,77 @@ class CreditsState extends MusicBeatState
 		//// update camera
 		var farAwaySpeedup = 0.002 * Math.max(0, Math.abs(camFollowPos.y - camFollow.y) - 360);
 		var lerpVal = Math.exp(-elapsed * (9.6 + farAwaySpeedup));
-		camFollowPos.setPosition(
-			FlxMath.lerp(camFollow.x, camFollowPos.x, lerpVal), 
-			FlxMath.lerp(camFollow.y, camFollowPos.y, lerpVal)
-		);
+		camFollowPos.setPosition(FlxMath.lerp(camFollow.x, camFollowPos.x, lerpVal), FlxMath.lerp(camFollow.y, camFollowPos.y, lerpVal));
 
 		////
-		if (!controlLock){
-		var speed = FlxG.keys.pressed.SHIFT ? 2 : 1;
+		if (!controlLock) {
+			var speed = FlxG.keys.pressed.SHIFT ? 2 : 1;
 
-		var mouseWheel = FlxG.mouse.wheel;
-		var change = 0;
+			var mouseWheel = FlxG.mouse.wheel;
+			var change = 0;
 
-		if (mouseWheel != 0)
-			change -= mouseWheel * speed;
+			if (mouseWheel != 0)
+				change -= mouseWheel * speed;
 
-		if (controls.UI_DOWN_P){
-			change += speed;
-			secsHolding = 0;
+			if (controls.UI_DOWN_P) {
+				change += speed;
+				secsHolding = 0;
+			}
+			if (controls.UI_UP_P) {
+				change -= speed;
+				secsHolding = 0;
+			}
+
+			if (controls.UI_UP || controls.UI_DOWN) {
+				var checkLastHold:Int = Math.floor((secsHolding - 0.5) * 10);
+				secsHolding += elapsed;
+				var checkNewHold:Int = Math.floor((secsHolding - 0.5) * 10);
+
+				if (secsHolding > 0.5 && checkNewHold - checkLastHold > 0)
+					change += (checkNewHold - checkLastHold) * (controls.UI_UP ? -speed : speed);
+			}
+
+			if (change != 0)
+				changeSelection(change);
+
+			if (controls.BACK && goBack != null) {
+				controlLock = true;
+				FlxG.sound.play(Paths.sound('cancelMenu'));
+				goBack();
+			}
+
+			if (controls.ACCEPT) {
+				var link:Null<String> = dataArray[curSelected].link;
+				if (link != null && link.length > 0)
+					CoolUtil.browserLoad(link);
+			}
 		}
-		if (controls.UI_UP_P){
-			change -= speed;
-			secsHolding = 0;
-		}
 
-		if (controls.UI_UP || controls.UI_DOWN){
-			var checkLastHold:Int = Math.floor((secsHolding - 0.5) * 10);
-			secsHolding += elapsed;
-			var checkNewHold:Int = Math.floor((secsHolding - 0.5) * 10);
-
-			if(secsHolding > 0.5 && checkNewHold - checkLastHold > 0)
-				change += (checkNewHold - checkLastHold) * (controls.UI_UP ? -speed : speed);
-		}
-
-		if (change != 0)
-			changeSelection(change);
-
-		if (controls.BACK && goBack != null) {
-			controlLock = true;
-			FlxG.sound.play(Paths.sound('cancelMenu'));
-			goBack();
-		}
-
-		if (controls.ACCEPT){
-			var link:Null<String> = dataArray[curSelected].link;
-			if (link != null && link.length > 0)
-				CoolUtil.browserLoad(link);
-		}
-
-		}
-		
 		super.update(elapsed);
 	}
 
 	////
-	public static function listFromPath(path:String):Array<CreditsOption>
-	{
+	public static function listFromPath(path:String):Array<CreditsOption> {
 		var str:Null<String> = Paths.getContent(path);
 		return (str != null) ? listFromString(str) : [];
 	}
 
-	public static function listFromString(string:String):Array<CreditsOption>
-	{
+	public static function listFromString(string:String):Array<CreditsOption> {
 		var options:Array<CreditsOption> = [];
 
 		for (line in CoolUtil.listFromString(string)) {
 			if (line.length != 0) {
 				options.push(optionFromString(line));
-			}			
+			}
 		}
 
 		return options;
 	}
 
-	/** 
+	/**
 		Parse a string in `text::icon::description::link` format
 	**/
-	public static function optionFromString(string:String):CreditsOption
-	{
+	public static function optionFromString(string:String):CreditsOption {
 		var option = new CreditsOption();
 		var data = string.split("::");
 
