@@ -21,8 +21,9 @@ import flixel.math.FlxRect;
 using StringTools;
 
 // Used to get the path and menu styles
+
 @:access(funkin.data.content.PackManager.allPacks)
-class ContentManagerState extends MusicBeatState {	
+class ContentManagerState extends MusicBeatState {
 	var entries:EntryList;
 
 	var listBoxStartY:Float = 0;
@@ -40,7 +41,7 @@ class ContentManagerState extends MusicBeatState {
 
 	var bgManager:ChangingMenuBG;
 	var bgShader = new WarmBGShader();
-	
+
 	var rightCamera:FlxCamera;
 	var packCardBG:FlxSprite;
 	var packCardTitle:FlxText;
@@ -49,7 +50,7 @@ class ContentManagerState extends MusicBeatState {
 	var packDescriptionText:ScrollText;
 
 	var dropdown:Dropdown;
-	
+
 	var topCamera:FlxCamera;
 
 	/** Whether to save the entry list and reload packs after leaving this state **/
@@ -68,21 +69,23 @@ class ContentManagerState extends MusicBeatState {
 	inline function getDisplayData(entry:PackEntry) {
 		final pack = PackManager.allPacks.get(entry.id);
 		final data:PackMetadata = pack.metadata ?? {};
-		
+
 		displayData.packIsLoaded = PackManager.packMap.exists(entry.id);
 		displayData.runsGlobally = pack.runsGlobally;
 
 		////
 		displayData.title = data.title ?? entry.id;
 		displayData.description = data.description ?? "No description provided";
-		displayData.author = data.author;//?? "Unknown";
+		displayData.author = data.author; // ?? "Unknown";
 
-		displayData.bgColor = data.bgColor ?? data.accentColor ?? FlxColor.fromHSB(stringToHue(entry.id), 0.75, FlxG.random.float(0.467, 0.512)); //0xFFea71fd;
+		displayData.bgColor = data.bgColor ?? data.accentColor ?? FlxColor.fromHSB(stringToHue(entry.id), 0.75, FlxG.random.float(0.467, 0.512)); // 0xFFea71fd;
 		displayData.accentColor = data.accentColor ?? FlxColor.WHITE;
 
 		displayData.bannerAsset = packGraphic(pack, 'packbanner');
-		displayData.bgAsset = packGraphic(pack, 'images/menuDesat') ?? packGraphic(PackManager.engineAssets, 'images/contentmenu/menuDesat') ?? FlxGraphic.fromRectangle(FlxG.width, FlxG.height, 0xFFE1E1E1, false, 'contentmanager_nobg');
-	
+		displayData.bgAsset = packGraphic(pack,
+			'images/menuDesat') ?? packGraphic(PackManager.engineAssets,
+				'images/contentmenu/menuDesat') ?? FlxGraphic.fromRectangle(FlxG.width, FlxG.height, 0xFFE1E1E1, false, 'contentmanager_nobg');
+
 		////
 		@:privateAccess
 		if (pack.loadException.length > 0) {
@@ -101,12 +104,12 @@ class ContentManagerState extends MusicBeatState {
 		if (FlxG.sound.music?.playing && FlxG.sound.music.volume > 0.1) {
 			MusicBeatState.cacheMusic('contentmanager');
 			FlxG.sound.music.fadeOut(0.4, 0.0, _ -> MusicBeatState.playMusic('contentmanager', true));
-		}else {
+		} else {
 			MusicBeatState.playMusic('contentmanager');
 		}
 
 		FlxG.camera.bgColor = 0xFF4C4C4C;
-		//add(new funkin.objects.CoolMenuBG('menuDesat', 0xFFffFFFF));
+		// add(new funkin.objects.CoolMenuBG('menuDesat', 0xFFffFFFF));
 		bgManager = new ChangingMenuBG();
 		add(bgManager);
 
@@ -115,12 +118,12 @@ class ContentManagerState extends MusicBeatState {
 
 		var borderHPadding = 20;
 		var borderVPadding = 80;
-		
+
 		var listX = borderHPadding;
 		var listY = borderVPadding;
 		var listWidth = Std.int(FlxG.width / 3 - borderHPadding);
 		var listHeight:Int = FlxG.height - borderVPadding * 2;
-		
+
 		#if true
 		listBoxHeight = 64;
 		listBoxSpacing = 8;
@@ -140,12 +143,12 @@ class ContentManagerState extends MusicBeatState {
 			searchBox.text = "Search";
 			searchBox.drawFrame();
 			searchBox.updateHitbox();
-			
+
 			var searchBG = new FlxSprite(borderHPadding, listY + 8);
 
 			final searchBoxTextPadding = 6;
 			final searchBoxHeight = Std.int(searchBox.height) + searchBoxTextPadding * 2;
-			
+
 			searchBG.makeGraphic(1, 1);
 			searchBG.color = 0xFF000000;
 			searchBG.alpha = 0.64;
@@ -155,7 +158,7 @@ class ContentManagerState extends MusicBeatState {
 
 			SpriteTools.objectCenter(searchBox, searchBG);
 			add(searchBox);
-			
+
 			listY = Std.int(searchBG.y + searchBG.height) + 8;
 			listHeight = FlxG.height - listY - borderVPadding;
 		}
@@ -163,8 +166,8 @@ class ContentManagerState extends MusicBeatState {
 		////
 		listCamera = new FlxCamera(listX, listY, listWidth, listHeight);
 		listCamera.bgColor = FlxColor.fromRGBFloat(0, 0, 0, 0.25);
-		//listCamera.targetOffset.y = -26; // what's up with this
-		//okay so it has something to do with using LOCKON target following but i don't wanna add camFollow camFollowPos bs here so suck it
+		// listCamera.targetOffset.y = -26; // what's up with this
+		// okay so it has something to do with using LOCKON target following but i don't wanna add camFollow camFollowPos bs here so suck it
 		listCamera.minScrollX = 0;
 		listCamera.minScrollY = listBoxSpacing;
 		listCamera.maxScrollY = listBoxSpacing + listBoxSpacing;
@@ -205,20 +208,13 @@ class ContentManagerState extends MusicBeatState {
 		}
 
 		////
-		var topB = new SlicedSprite(
-			listCamera.x, 
-			borderVPadding,
-			listCamera.width, 
-			64,
-			"contentmenu/9slice_top",
-			[4, 4, 24, 28]
-		);
+		var topB = new SlicedSprite(listCamera.x, borderVPadding, listCamera.width, 64, "contentmenu/9slice_top", [4, 4, 24, 28]);
 		topB.y -= topB.height;
 		add(topB);
 
 		var titleText = new FlxText(topB.x + 16, 0, topB.width - 16 * 2, "Content Manager");
 		titleText.setFormat(Paths.font("quanticob.ttf"), 24, 0xFF000000, LEFT);
-		//titleText.setBorderStyle(OUTLINE, 0xFF000000, 1);
+		// titleText.setBorderStyle(OUTLINE, 0xFF000000, 1);
 		titleText.pixelPerfectRender = true; // suck ya dad
 		titleText.drawFrame();
 		titleText.updateHitbox();
@@ -226,14 +222,7 @@ class ContentManagerState extends MusicBeatState {
 		add(titleText);
 
 		////
-		var botB = new SlicedSprite(
-			listCamera.x, 
-			listCamera.y + listCamera.height,
-			listCamera.width, 
-			64,
-			"contentmenu/9slice_bot",
-			[4, 4, 24, 28]
-		);
+		var botB = new SlicedSprite(listCamera.x, listCamera.y + listCamera.height, listCamera.width, 64, "contentmenu/9slice_bot", [4, 4, 24, 28]);
 		add(botB);
 
 		var TOGGLE_BIND = InputFormatter.getBindString('accept').toUpperCase();
@@ -246,7 +235,7 @@ class ContentManagerState extends MusicBeatState {
 
 		var hintText = new FlxText(botB.x + 8, 0, (botB.width - 8 * 2), str);
 		hintText.setFormat(Paths.font("vcr.ttf"), 16, 0xFF000000, LEFT);
-		//hintText.setBorderStyle(OUTLINE, 0xFF000000, 1);
+		// hintText.setBorderStyle(OUTLINE, 0xFF000000, 1);
 		hintText.drawFrame();
 		hintText.updateHitbox();
 		add(hintText);
@@ -267,13 +256,13 @@ class ContentManagerState extends MusicBeatState {
 		var packCardBGBorder = CoolUtil.blankSprite(rightCamera.width, 112, 0xFF000000);
 		packCardBGBorder.x = rightCamera.x;
 		packCardBGBorder.y = rightCamera.y;
-		
+
 		packCardBG = CoolUtil.blankSprite(packCardBGBorder.width - 4 - 4, packCardBGBorder.height - 4 - 8);
 		packCardBG.x = packCardBGBorder.x + 4;
 		packCardBG.y = packCardBGBorder.y + 4;
 
 		packCardBannerGroup = new ChangingSpriteGroup();
-		
+
 		packCardTitle = new FlxText(0, 0, packCardBG.width - 16 * 2, "");
 		packCardTitle.setFormat(Paths.font("quanticob.ttf"), 26, 0xFF000000, LEFT);
 		packCardTitle.pixelPerfectRender = true;
@@ -281,12 +270,12 @@ class ContentManagerState extends MusicBeatState {
 		packCardAuthor = new FlxText(0, 0, packCardTitle.width, "");
 		packCardAuthor.setFormat(Paths.font("quanticob.ttf"), 18, 0xFF000000, LEFT);
 		packCardAuthor.pixelPerfectRender = true;
-		
+
 		add(packCardBGBorder);
 		add(packCardBG);
 		add(packCardBannerGroup);
-		add(packCardTitle);		
-		add(packCardAuthor);		
+		add(packCardTitle);
+		add(packCardAuthor);
 
 		var offy = Std.int(packCardBGBorder.height + 16);
 		offy += Std.int((rightCamera.height - offy) - packCardBGBorder.height); // copy pack height lol
@@ -303,7 +292,7 @@ class ContentManagerState extends MusicBeatState {
 
 		final descPadding = 8;
 		final scrollBarWidth = 12;
-		
+
 		packDescriptionText = new ScrollText(rightCamera.x + descPadding, rightCamera.y + descPadding, rightCamera.width - descPadding * 2 - scrollBarWidth);
 		packDescriptionText.setFormat(Paths.font("quantico.ttf"), 18, FlxColor.WHITE, LEFT);
 		packDescriptionText.minY = packDescriptionText.y;
@@ -319,7 +308,7 @@ class ContentManagerState extends MusicBeatState {
 
 		topCamera = new FlxCamera();
 		topCamera.bgColor = 0;
-		FlxG.cameras.add(topCamera, false); 
+		FlxG.cameras.add(topCamera, false);
 
 		////
 		changeSelected(0);
@@ -330,7 +319,7 @@ class ContentManagerState extends MusicBeatState {
 	function focusOnSelectedEntry() {
 		var curOpt = listGrp.members[listSelectedIndex];
 		if (curOpt != null) {
-			//curOpt.onSelected();
+			// curOpt.onSelected();
 			listCamera.follow(curOpt.bg, LOCKON, 0.25);
 		}
 	}
@@ -338,7 +327,7 @@ class ContentManagerState extends MusicBeatState {
 	function changeSelected(val:Int, isAbs:Bool = false) {
 		var prevSelected = listSelectedIndex;
 		listSelectedIndex = isAbs ? val : CoolUtil.updateIndex(listSelectedIndex, val, listGrp.length);
-		
+
 		if (listHoveredIndex != -1) {
 			listGrp.members[listHoveredIndex].unSelected();
 			listHoveredIndex = -1;
@@ -347,7 +336,8 @@ class ContentManagerState extends MusicBeatState {
 		dropdown.exists = false;
 
 		var prevOpt = listGrp.members[prevSelected];
-		if (prevOpt != null) prevOpt.unSelected();
+		if (prevOpt != null)
+			prevOpt.unSelected();
 
 		var curOpt = listGrp.members[listSelectedIndex];
 		if (curOpt != null) {
@@ -359,33 +349,33 @@ class ContentManagerState extends MusicBeatState {
 		final entry = entries.array[listSelectedIndex];
 
 		getDisplayData(entry);
-		//trace(displayData);
-		
+		// trace(displayData);
+
 		if (displayData.author != null) {
 			var midY = packCardBG.y + packCardBG.height / 2;
-			
+
 			packCardTitle.text = displayData.title;
 			SpriteTools.objectCenter(packCardTitle, packCardBG, X);
 			packCardTitle.y = midY - packCardTitle.height + 8;
-			
+
 			packCardAuthor.text = displayData.author;
 			SpriteTools.objectCenter(packCardAuthor, packCardBG, X);
 			packCardAuthor.y = midY;
 			packCardAuthor.exists = true;
-		}else {
+		} else {
 			packCardTitle.text = displayData.title;
 			SpriteTools.objectCenter(packCardTitle, packCardBG, XY);
-			
+
 			packCardAuthor.exists = false;
 		}
 
 		var packCardBanner:FlxSprite;
 		if (displayData.bannerAsset != null) {
-			packCardBannerGroup.fadeTo(displayData.bannerAsset);	
+			packCardBannerGroup.fadeTo(displayData.bannerAsset);
 			packCardBanner = packCardBannerGroup.curSprite;
 			packCardBanner.setGraphicSize(0, packCardBG.height);
 			packCardBanner.updateHitbox();
-		}else {
+		} else {
 			packCardBannerGroup.fadeTo(Paths.whitePixel.parent);
 			packCardBanner = packCardBannerGroup.curSprite;
 			packCardBanner.setGraphicSize(packCardBG.width, packCardBG.height);
@@ -396,9 +386,9 @@ class ContentManagerState extends MusicBeatState {
 
 		var descStr = displayData.description;
 		/*
-		if (displayData.runsGlobally)
-			descStr += '\n\nNOTE: This pack runs globally';
-		*/
+			if (displayData.runsGlobally)
+				descStr += '\n\nNOTE: This pack runs globally';
+		 */
 
 		packDescriptionText.text = descStr;
 
@@ -409,7 +399,7 @@ class ContentManagerState extends MusicBeatState {
 	function changeHovered(index:Int) {
 		if (listHoveredIndex != -1 && listHoveredIndex != listSelectedIndex)
 			listGrp.members[listHoveredIndex].unSelected();
-		
+
 		listHoveredIndex = index;
 		if (listHoveredIndex != -1)
 			listGrp.members[listHoveredIndex].onSelected();
@@ -425,12 +415,12 @@ class ContentManagerState extends MusicBeatState {
 			entries.array[listSelectedIndex] = null;
 			entries.array.insert(newIndex, entry);
 			while (entries.array.remove(null)) {}
-		}else {
+		} else {
 			final entry = entries.array[listSelectedIndex];
 			entries.array[listSelectedIndex] = entries.array[newIndex];
 			entries.array[newIndex] = entry;
 		}
-		
+
 		didChanges = true;
 		updateListBoxes();
 		changeSelected(newIndex, true);
@@ -442,10 +432,10 @@ class ContentManagerState extends MusicBeatState {
 
 		if (packIsLoaded)
 			options.push(LAUNCH_MOD);
-		
+
 		options.push(OPEN_MOD_LOCATION);
-		//options.push(entry.favorite ? REMOVE_FAVORITE : ADD_FAVORITE);
-		
+		// options.push(entry.favorite ? REMOVE_FAVORITE : ADD_FAVORITE);
+
 		if (packIsLoaded)
 			options.push(OPEN_PACK_OPTIONS);
 
@@ -469,8 +459,8 @@ class ContentManagerState extends MusicBeatState {
 
 	function acceptOption(entry:PackEntry, opt:ModOption) {
 		final pack = PackManager.allPacks.get(entry.id);
-		
-		switch(opt) {
+
+		switch (opt) {
 			case LAUNCH_MOD:
 				pack.launch();
 
@@ -540,7 +530,7 @@ class ContentManagerState extends MusicBeatState {
 		if (FlxG.keys.justPressed.CONTROL && listHoveredIndex == -1) {
 			openDropdown();
 			dropdown.changeSelected(0, true);
-			//focusOnSelectedEntry();
+			// focusOnSelectedEntry();
 		}
 
 		if (controls.ACCEPT && listHoveredIndex == -1)
@@ -574,7 +564,7 @@ class ContentManagerState extends MusicBeatState {
 			}
 			trace(errorMsg);
 			updateListBoxes();
-		}else {
+		} else {
 			MusicBeatState.switchState(new funkin.states.MainMenuState());
 		}
 	}
@@ -585,7 +575,8 @@ class ContentManagerState extends MusicBeatState {
 		}
 
 		var cameraMoved:Bool = _lastListScrollY != listCamera.scroll.y;
-		if (cameraMoved) _lastListScrollY = listCamera.scroll.y;
+		if (cameraMoved)
+			_lastListScrollY = listCamera.scroll.y;
 
 		var exitDropdown:Bool = false;
 
@@ -593,9 +584,9 @@ class ContentManagerState extends MusicBeatState {
 		var overlapsScrollBar:Bool = CoolUtil.overlapsMouse(listScrollBar, listScrollBar.camera);
 
 		/*
-		if (FlxG.mouse.justPressed && overlapsScrollBar)
-			exitDropdown = true;
-		*/
+			if (FlxG.mouse.justPressed && overlapsScrollBar)
+				exitDropdown = true;
+		 */
 		if (FlxG.mouse.justPressed && !CoolUtil.mouseOverlapsCamera(dropdown.camera)) {
 			exitDropdown = true;
 		}
@@ -623,7 +614,7 @@ class ContentManagerState extends MusicBeatState {
 		if (overlapsScrollBar || !CoolUtil.mouseOverlapsCamera(listCamera)) {
 			if (listHoveredIndex != -1)
 				changeHovered(-1);
-		}else {
+		} else {
 			if (FlxG.mouse.wheel != 0) {
 				listCamera.follow(null);
 				@:privateAccess
@@ -633,12 +624,13 @@ class ContentManagerState extends MusicBeatState {
 				exitDropdown = true;
 			}
 
-			if (!dragging && ((cameraMoved && listHoveredIndex != -1) || FlxG.mouse.deltaScreenX != 0.0 || FlxG.mouse.deltaScreenX != 0.0)) {
+			if (!dragging
+				&& ((cameraMoved && listHoveredIndex != -1) || FlxG.mouse.deltaScreenX != 0.0 || FlxG.mouse.deltaScreenX != 0.0)) {
 				var hoverIndex = getHoverIndex();
 				if (hoverIndex != -1)
 					changeHovered(hoverIndex);
 			}
-			
+
 			if (FlxG.mouse.justPressed) {
 				var hoverIndex = getHoverIndex();
 				if (hoverIndex != -1) {
@@ -646,8 +638,8 @@ class ContentManagerState extends MusicBeatState {
 
 					if (CoolUtil.overlapsMouse(box.toggleSprite, listCamera)) {
 						toggleEntry(hoverIndex);
-					}else {
-						changeSelected(hoverIndex, true);				
+					} else {
+						changeSelected(hoverIndex, true);
 					}
 
 					if (CoolUtil.overlapsMouse(box.dragSprite, listCamera)) {
@@ -656,7 +648,7 @@ class ContentManagerState extends MusicBeatState {
 					}
 				}
 			}
-			
+
 			if (FlxG.mouse.justPressedRight) {
 				var hoverIndex = getHoverIndex();
 				if (hoverIndex != -1) {
@@ -675,7 +667,7 @@ class ContentManagerState extends MusicBeatState {
 			var selBox = listGrp.members[listSelectedIndex];
 
 			@:privateAccess
-			//topCamera._scrollInternal.set(-listCamera.x, -listCamera.y);
+			// topCamera._scrollInternal.set(-listCamera.x, -listCamera.y);
 
 			selBox.y = mousePos.y - selBox.height / 2;
 			selBox.camera = topCamera;
@@ -693,7 +685,7 @@ class ContentManagerState extends MusicBeatState {
 			if (box != null) {
 				var camera = listCamera;
 				var y = camera.y + box.getScreenPosition(null, camera).y;
-				
+
 				dropdown.x = camera.x + camera.width;
 				dropdown.y = y;
 			}
@@ -705,9 +697,7 @@ class ContentManagerState extends MusicBeatState {
 		super.update(elapsed);
 	}
 
-	function save() {
-
-	}
+	function save() {}
 
 	override function startOutro(onOutroComplete:() -> Void) {
 		if (FlxG.sound.music?.playing)
@@ -761,7 +751,7 @@ private class PackDisplayData {
 			}
 
 			var value = Reflect.getProperty(this, fieldName);
-			
+
 			if (Reflect.isFunction(value))
 				continue;
 
@@ -778,7 +768,7 @@ private inline function packGraphic(pack:Pack, key:String):Null<FlxGraphic> {
 	else {
 		var path = pack.getPath('$key.png');
 		var bmp = openfl.display.BitmapData.fromFile(path);
-		return (bmp==null) ? null : FlxG.bitmap.add(bmp, false, path);
+		return (bmp == null) ? null : FlxG.bitmap.add(bmp, false, path);
 	}
 }
 
@@ -830,16 +820,16 @@ private class Dropdown extends FlxTypedGroup<DropdownItem> {
 		}
 
 		this.options = options;
-		//changeSelected(-1, true);
+		// changeSelected(-1, true);
 	}
 
 	public function changeSelected(val:Int, isAbs:Bool = false) {
 		var prevSelected = selectedIndex;
 		selectedIndex = isAbs ? val : CoolUtil.updateIndex(selectedIndex, val, this.length);
-		
+
 		var prevObj = members[prevSelected];
 		prevObj?.unSelected();
-		
+
 		var curObj = members[selectedIndex];
 		curObj?.onSelected();
 	}
@@ -862,7 +852,7 @@ private class Dropdown extends FlxTypedGroup<DropdownItem> {
 				}
 			}
 		}
-		
+
 		if (!hovered && FlxG.mouse.justPressed) {
 			this.exists = false;
 		}
@@ -900,25 +890,18 @@ private class DropdownItem extends FlxGroup {
 
 	public function new() {
 		super();
-		
-		bg = new SlicedSprite(
-			0,
-			0,
-			0,
-			0,
-			"contentmenu/9slice",
-			[24, 24, 24, 28]
-		);
+
+		bg = new SlicedSprite(0, 0, 0, 0, "contentmenu/9slice", [24, 24, 24, 28]);
 		bg.useDefaultAntialiasing = true;
 
 		txt = new FlxText(0, 0, 0, "", 18);
 		txt.font = Paths.font("quanticob.ttf");
 		txt.color = FlxColor.BLACK;
-		
+
 		add(bg);
 		add(txt);
 	}
-	
+
 	public function setup(x:Float = 0.0, y:Float = 0.0, width:Float, height:Float, str:String = "") {
 		bg.setPosition(x, y);
 		bg.setSize(width, height);
@@ -931,9 +914,9 @@ private class DropdownItem extends FlxGroup {
 
 	public function onSelected() {
 		bg.color = FlxColor.YELLOW;
-		//txt.color = FlxColor.RED;
+		// txt.color = FlxColor.RED;
 	}
-	
+
 	public function unSelected() {
 		bg.color = FlxColor.WHITE;
 		txt.color = FlxColor.BLACK;
@@ -949,10 +932,10 @@ private class EntryBox extends FlxSpriteGroup {
 	public var dragSprite:FlxSprite;
 	public var toggleSprite:FlxSprite;
 	public var selectionHighlight:FlxSprite;
-	
+
 	public function new(width:Float, height:Float) {
 		super();
-		
+
 		bg = new FlxSprite();
 		bg.color = FlxColor.WHITE;
 		bg.makeGraphic(1, 1);
@@ -977,8 +960,8 @@ private class EntryBox extends FlxSpriteGroup {
 		text = new FlxText(0, 0, 0, "unknown", 18);
 		text.setFormat(Paths.font("quanticob.ttf"), 18, 0xFF000000, LEFT);
 		text.alignment = LEFT;
-		//text.setFormat();
-		//text.color = 0xFF000000;
+		// text.setFormat();
+		// text.color = 0xFF000000;
 		add(text);
 		SpriteTools.objectCenter(text, bg, Y);
 		text.y = Math.fround(text.y);
@@ -989,9 +972,10 @@ private class EntryBox extends FlxSpriteGroup {
 		toggleSprite.loadGraphic(graphic, true, Std.int(graphic.width / 2), graphic.height);
 		toggleSprite.animation.add("off", [0]);
 		toggleSprite.animation.add("on", [1]);
+		toggleSprite.antialiasing = false;
 		add(toggleSprite);
 		toggleSprite.x = bg.x + bg.width - toggleSprite.width - 20;
-		//toggleSprite.x = draggable.x - toggleSprite.width;
+		// toggleSprite.x = draggable.x - toggleSprite.width;
 		SpriteTools.objectCenter(toggleSprite, bg, Y);
 
 		selectionHighlight = new FlxSprite();
@@ -1007,9 +991,9 @@ private class EntryBox extends FlxSpriteGroup {
 
 	public function setEntry(entry:PackEntry) {
 		this.entry = entry;
-		
+
 		updateToggleSprite();
-		
+
 		@:privateAccess {
 			final pack = PackManager.allPacks.get(entry.id);
 
@@ -1020,7 +1004,7 @@ private class EntryBox extends FlxSpriteGroup {
 			icon.loadGraphic(graphic);
 			icon.checkEmptyFrame(); // flixel icon :o
 		}
-		
+
 		icon.setGraphicSize(32, 32);
 		icon.updateHitbox();
 		SpriteTools.objectCenter(icon, bg, Y);
@@ -1040,7 +1024,7 @@ private class EntryBox extends FlxSpriteGroup {
 		bg.blend = NORMAL;
 		text.alpha = 1.0;
 	}
-	
+
 	public function unSelected() {
 		selectionHighlight.visible = true;
 		bg.alpha = 0.67;
@@ -1048,13 +1032,12 @@ private class EntryBox extends FlxSpriteGroup {
 		text.alpha = 0.8;
 	}
 }
-
 /*
-abstract MenuIndex(Int) from Int to Int {
+	abstract MenuIndex(Int) from Int to Int {
 
-}
+	}
 
-class AutoScrollingText extends FlxText {
+	class AutoScrollingText extends FlxText {
 	public var minX:Float = 32;
 	public var maxX:Float = FlxG.width - 32;
 	public var viewWidth(get, never):Float;
@@ -1075,16 +1058,16 @@ class AutoScrollingText extends FlxText {
 	override function graphicLoaded() {
 		super.graphicLoaded();
 	}
-	
+
 	override function update(elapsed:Float) {
 		bg.update(elapsed);
 		super.update(elapsed);
 		bar.update(elapsed);
-		
+
 		final viewWidth = viewWidth;
 		this.x = CoolMath.boundTo(this.x, maxX - this.width, minX);
 	}
-	
+
 	override function draw() {
 		if (bg.exists && bg.visible) {
 			bg.setPosition(this.x, minX);
@@ -1097,11 +1080,11 @@ class AutoScrollingText extends FlxText {
 		{
 			var rect = this.clipRect ?? new FlxRect();
 			var bottom = this.x + this.width;
-			
+
 			rect.set(0, 0, this.width, this.width);
 			rect.x = Math.max(0.0, minX - this.x);
 			rect.width = this.width - (bottom - maxX) - rect.x;
-			
+
 			this.clipRect = rect;
 			super.draw();
 		}
@@ -1114,5 +1097,5 @@ class AutoScrollingText extends FlxText {
 	}
 
 	inline function get_viewWidth() return maxX - minX;
-}
-*/
+	}
+ */

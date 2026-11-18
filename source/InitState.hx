@@ -3,29 +3,23 @@ package;
 import flixel.util.FlxTimer;
 import funkin.*;
 import funkin.states.base.MusicBeatState;
-
 import funkin.data.Highscore;
 import funkin.input.Controls;
-
 import flixel.FlxG;
 import flixel.FlxState;
 import flixel.FlxSprite;
 import flixel.tweens.*;
 import funkin.states.base.TransitionableState;
-
 import DebugLog;
-
 #if sys
 import Sys.time as getTime;
 #else
 import haxe.Timer.stamp as getTime;
 #end
-
 #if MULTICORE_LOADING
 import sys.thread.Thread;
 import sys.thread.Mutex;
 #end
-
 #if (CHECK_FOR_UPDATES || display)
 import funkin.states.UpdaterState;
 #end
@@ -35,17 +29,16 @@ using StringTools;
 @:structInit
 private class ShitToDo {
 	public var str:String;
-	public var f:Void -> Void;
+	public var f:Void->Void;
 }
 
-private inline function Run(str:String, f:Void -> Void):ShitToDo {
+private inline function Run(str:String, f:Void->Void):ShitToDo {
 	return {str: str, f: f};
 }
 
 inline final COOLDOWN = 0.16;
 
-class InitState extends TransitionableState
-{
+class InitState extends TransitionableState {
 	public static var nextState:Class<FlxState> = funkin.states.TitleState;
 	private static var loaded = false;
 
@@ -53,7 +46,7 @@ class InitState extends TransitionableState
 	private var working:Bool = false;
 	private var cooldown:Float = COOLDOWN;
 	private var loadingTime:Float = 0;
-	
+
 	var trollface:FlxSprite;
 	var log:DebugLogGroup;
 	var bar:FlxSprite;
@@ -61,8 +54,7 @@ class InitState extends TransitionableState
 
 	final shitToDo:Array<ShitToDo>;
 
-	public function new()
-	{
+	public function new() {
 		shitToDo = [
 			Run("Initializing content", Paths.init),
 			Run("Initializing controls", Controls.init),
@@ -76,18 +68,18 @@ class InitState extends TransitionableState
 			Run("Loading bread", function() {
 				final graphic = Paths.image("Garlic-Bread-PNG-Images");
 				Paths.graphicDumpExclusions.push(graphic);
-				
+
 				final bread = Main.bread;
 				bread.bitmapData = graphic.bitmap;
-				
-				function onGameResize(stageWidth, stageHeight){
+
+				function onGameResize(stageWidth, stageHeight) {
 					var scaleFactor = stageHeight / FlxG.initialHeight;
 					bread.scaleX = scaleFactor;
 					bread.scaleY = scaleFactor;
 					bread.x = (stageWidth - bread.width) / 2;
 					bread.y = (stageHeight - bread.height) / 2;
 				}
-				
+
 				onGameResize(FlxG.width, FlxG.height);
 				FlxG.signals.gameResized.add(onGameResize);
 			}),
@@ -101,23 +93,23 @@ class InitState extends TransitionableState
 			#end
 			Run("All done!", () -> {
 				@:privateAccess
-				var notFocused = FlxG.stage.window.minimized || Main.game._lostFocus; 
+				var notFocused = FlxG.stage.window.minimized || Main.game._lostFocus;
 				if (notFocused) {
 					FlxG.camera.visible = false;
 					this.transOut = null;
 				}
-				
+
 				new FlxTimer().start(2 / 40, function(_) {
 					goToState();
-					
+
 					/*
-					if (notFocused) {
-						// Force focus :P
-						FlxG.stage.window.minimized = true;
-						FlxG.stage.window.minimized = false;
-						FlxG.stage.window.focus();
-					}
-					*/
+						if (notFocused) {
+							// Force focus :P
+							FlxG.stage.window.minimized = true;
+							FlxG.stage.window.minimized = false;
+							FlxG.stage.window.focus();
+						}
+					 */
 
 					FlxG.autoPause = ClientPrefs.autoPause;
 				});
@@ -134,8 +126,7 @@ class InitState extends TransitionableState
 		this.transOut = funkin.transitions.FadeTransition;
 	}
 
-	override function create()
-	{
+	override function create() {
 		super.create();
 
 		TransitionableState.defaultTransition = funkin.transitions.FadeTransition;
@@ -145,13 +136,13 @@ class InitState extends TransitionableState
 		FlxG.fixedTimestep = false;
 		FlxG.autoPause = false;
 
-		#if false
+		#if true
 		var bmp = Paths.getBitmapData("assets/images/trollface.png");
 		/*
-		for (x in 0...bmp.width)
-			for (y in 0...bmp.height)
-				bmp.setPixel32(x, y, (bmp.getPixel32(x, y):flixel.util.FlxColor).getInverted());
-		*/
+			for (x in 0...bmp.width)
+				for (y in 0...bmp.height)
+					bmp.setPixel32(x, y, (bmp.getPixel32(x, y):flixel.util.FlxColor).getInverted());
+		 */
 
 		trollface = new FlxSprite();
 		trollface.loadGraphic(bmp);
@@ -161,7 +152,7 @@ class InitState extends TransitionableState
 		trollface.alpha = 0.0;
 		add(trollface);
 		#end
-		
+
 		bar = new FlxSprite();
 		bar.makeGraphic(1, 1, 0xFFCBFF9B, false);
 		bar.scale.set(0, 8);
@@ -184,11 +175,10 @@ class InitState extends TransitionableState
 	override function update(elapsed:Float) {
 		if (cooldown > 0.0) {
 			cooldown -= elapsed;
-		}
-		else if (step < shitToDo.length) {
+		} else if (step < shitToDo.length) {
 			doStuff();
 		}
-		
+
 		super.update(elapsed);
 	}
 
@@ -198,18 +188,18 @@ class InitState extends TransitionableState
 			trace(todo.str);
 			log.addMessage(todo.str);
 			working = true;
-		}
-		else {
+		} else {
 			var todo = shitToDo[step];
 			todo.f();
-			
+
 			step++;
 			working = false;
 
 			cooldown = COOLDOWN;
-			
+
 			var perc = (1 / shitToDo.length);
-			if (loadTwn != null) loadTwn.cancel();
+			if (loadTwn != null)
+				loadTwn.cancel();
 			loadTwn = FlxTween.num(step * perc - perc, step * perc, cooldown, null, (v) -> {
 				bar.scale.x = v * FlxG.width;
 				#if false
@@ -220,7 +210,7 @@ class InitState extends TransitionableState
 	}
 
 	static function goToState() {
-		#if(CHECK_FOR_UPDATES || display)
+		#if (CHECK_FOR_UPDATES || display)
 		if (Main.outOfDate)
 			MusicBeatState.switchState(new UpdaterState(Main.recentRelease)); // UPDATE!!
 		else
